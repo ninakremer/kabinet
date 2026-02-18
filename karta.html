@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>кабинет</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='none' stroke='%23636366' stroke-width='8'/><circle cx='50' cy='50' r='12' fill='%23636366'/></svg>" />
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;overflow:hidden}
+    body{font-family:-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#F2F2F7;color:#1C1C1E;user-select:none}
+    ::selection{background:rgba(0,0,0,0.08)}
+
+    /* Splash / Auth */
+    .splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:transparent;pointer-events:all}
+    .splash-card{position:relative;z-index:1;width:320px;background:#fff;border:1px solid #000;padding:32px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:0}
+    .splash-logo-wrap{width:100%;margin-bottom:6px}
+    .splash-tagline{font-size:11px;color:#888;margin-bottom:28px;text-align:center;letter-spacing:.01em}
+    .splash-tabs{display:flex;width:100%;margin-bottom:22px}
+    .splash-tab{flex:1;padding:7px 0;font-size:11px;font-weight:600;font-family:inherit;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#888;transition:color .1s,border-color .1s;letter-spacing:.02em}
+    .splash-tab.active{color:#000;border-bottom:2px solid #000}
+    .splash-fields{width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+    .splash-input{width:100%;border:1px solid #ccc;padding:9px 12px;font-size:12px;font-family:inherit;color:#1C1C1E;outline:none;transition:border-color .1s;box-sizing:border-box;background:#fff}
+    .splash-input:focus{border-color:#000}
+    .splash-input::placeholder{color:#AEAEB2}
+    .splash-btn{width:100%;padding:11px;border:1px solid #000;background:#000;color:#fff;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.04em;transition:background .1s;margin-bottom:8px}
+    .splash-btn:hover{background:#333}
+    .splash-note{font-size:10px;color:#AEAEB2;text-align:center;line-height:1.5}
+    .splash-note a{color:#888;text-underline-offset:2px;cursor:pointer}
+    .splash-demo{font-size:10px;color:#888;cursor:pointer;text-align:center;margin-top:6px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    .splash-demo:hover{color:#000}
+    .splash-err{font-size:10px;color:#FF3B30;text-align:center;min-height:14px}
+    #app{display:flex;width:100%;height:100vh}
+    #app.blurred{filter:blur(3px);pointer-events:none;user-select:none;transition:filter .3s}
+
+    /* Left Panel */
+    .lp{width:117px;height:100vh;flex-shrink:0;display:flex;flex-direction:column;
+      background:#FFF;
+      border-right:1px solid #000;
+      z-index:60;position:relative;overflow-y:auto;overflow-x:hidden}
+    .lp::-webkit-scrollbar{width:0}
+    .lp-logo{font-size:17px;font-weight:700;color:#000;letter-spacing:0.08em;padding:0 10px;text-transform:lowercase;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-bottom:1px solid #000}
+    .slbl{font-size:10px;font-weight:500;color:#000;letter-spacing:0.01em;text-align:left;padding:8px 24px 4px 10px;position:relative;z-index:1;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;width:100%;box-sizing:border-box}
+    .slbl:hover{opacity:.6}
+    .slbl::before{content:'•';font-size:16px;line-height:1;color:#000;flex-shrink:0}
+    .slbl-arrow{font-size:8px;color:#000;position:absolute;right:12px;top:50%;transform:translateY(-50%);transition:transform .2s}
+    .sec.collapsed .slbl-arrow{transform:translateY(-50%) rotate(-90deg)}
+    .sec-body{overflow:hidden;transition:max-height .25s ease,opacity .2s;max-height:500px;opacity:1}
+    .sec.collapsed .sec-body{max-height:0;opacity:0}
+    .sdiv{width:70px;height:1px;background:#ccc;margin:2px auto}
+    .lp-link{cursor:pointer;padding:8px 8px 8px 10px}
+    .lp-link:hover{opacity:.6}
+
+    /* Panels */
+    .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none}
+    .panel-overlay.open{display:block}
+    .panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:320px;background:#FFF;border:1px solid #000;z-index:210;display:none}
+    .panel.open{display:block}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #000;font-size:13px;font-weight:600;color:#000}
+    .panel-close{border:none;background:none;cursor:pointer;font-size:14px;color:#000}
+    .panel-close:hover{opacity:.5}
+    .panel-body{padding:16px}
+    .panel-field{margin-bottom:12px}
+    .panel-field label{display:block;font-size:10px;font-weight:500;color:#888;margin-bottom:4px}
+    .panel-field input{width:100%;border:1px solid #ccc;padding:8px 10px;font-size:13px;font-family:inherit;color:#000;box-sizing:border-box;outline:none}
+    .panel-field input:focus{border-color:#000}
+    .panel-plan{display:flex;align-items:center;gap:8px}
+    .plan-badge{font-size:10px;font-weight:600;color:#000;background:#f0f0f0;padding:2px 8px}
+    .plan-text{font-size:12px;color:#888}
+    .panel-divider{height:1px;background:#000;margin:14px 0}
+    .panel-prices{display:flex;gap:8px;margin-bottom:14px}
+    .panel-price{flex:1;border:1px solid #ccc;padding:10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:2px;transition:border-color .1s}
+    .panel-price:hover{border-color:#888}
+    .panel-price.active{border-color:#000;border-width:2px}
+    .pp-period{font-size:10px;font-weight:600;color:#888;text-transform:uppercase}
+    .pp-amount{font-size:18px;font-weight:600;color:#000}
+    .pp-save{font-size:9px;color:#888}
+    .panel-btn{width:100%;padding:10px;border:1px solid #000;background:#000;color:#FFF;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:8px}
+    .panel-btn:hover{background:#333}
+    .panel-btn-out{width:100%;padding:8px;border:none;background:none;color:#888;font-size:11px;font-family:inherit;cursor:pointer}
+    .panel-btn-out:hover{color:#000}
+    .panel-about{font-size:13px;color:#000;line-height:1.5;margin-bottom:0}
+    .panel-greeting{font-size:15px;font-weight:600;color:#000;margin-bottom:14px;letter-spacing:-.01em}
+    .panel-row{display:flex;justify-content:space-between;font-size:12px;color:#000;padding:4px 0}
+    .panel-key{font-size:11px;color:#888;padding:3px 0}
+    .panel-key kbd{font-family:inherit;font-size:10px;background:#f0f0f0;padding:1px 6px;margin-right:6px;color:#000}
+    .panel-copy{font-size:11px;color:#888;text-align:center}
+    .panel-link{font-size:11px;color:#000;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    .panel-link:hover{opacity:.5}
+    .panel-wide{width:520px!important;max-width:calc(100vw - 32px)}
+    .panel-scroll{max-height:75vh;overflow-y:auto;padding:20px}
+    .panel-scroll::-webkit-scrollbar{width:4px}
+    .panel-scroll::-webkit-scrollbar-thumb{background:#ccc}
+    .guide-section-title{font-size:10px;font-weight:700;color:#000;letter-spacing:.08em;margin:16px 0 8px;text-transform:uppercase}
+    .guide-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;align-items:flex-start}
+    .guide-step:last-child{border-bottom:none}
+    .guide-step b{font-size:12px;color:#000;display:block;margin-bottom:4px}
+    .guide-step p{font-size:11px;color:#636366;margin:0;line-height:1.55}
+    .guide-num{width:20px;height:20px;background:#000;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .guide-icon{font-size:16px;width:24px;flex-shrink:0;text-align:center;margin-top:1px}
+    .guide-divider{height:1px;background:#000;margin:20px 0 4px}
+    .guide-keys{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+    .guide-key-row{display:flex;align-items:center;gap:10px;font-size:11px;color:#636366}
+    .guide-key-row kbd{background:#f5f5f5;border:1px solid #ddd;padding:2px 7px;font-size:10px;font-family:inherit;color:#000;white-space:nowrap}
+    .guide-qa{padding:10px 0;border-bottom:1px solid #f0f0f0}
+    .guide-qa:last-child{border-bottom:none}
+    .guide-q{font-size:12px;font-weight:600;color:#000;margin-bottom:5px}
+    .guide-a{font-size:11px;color:#636366;line-height:1.6}
+    .lp-save{cursor:pointer}
+    .lp-save:hover{background:#f5f5f5}
+    .lp-copy{display:block;text-align:left;font-size:8px;font-weight:500;color:#888;text-decoration:none;padding:6px 0 8px 10px;letter-spacing:0.05em;border-top:1px solid #000}
+    .lp-copy:hover{color:#000}
+    .sec{position:relative;z-index:1;border-top:1px solid #000}
+    .sec:first-child{border-top:none}
+    .lp > .sec:nth-child(2){border-top:none}
+
+    /* Tool buttons — text only */
+    .tbtn{width:100%;height:26px;border:none;background:none;border-radius:0;cursor:pointer;display:flex;align-items:center;justify-content:flex-start;padding:0 10px;transition:background .1s;margin:0}
+    .tbtn:hover{background:#f0f0f0}
+    .tbtn.active{background:#f0f0f0}
+    .tbtn .tl{font-size:10px;font-weight:500;color:#000;line-height:1}
+    .tbtn.active .tl{text-decoration:none}
+
+    /* List items (boards, notes) */
+    .litm{width:100%;margin:0;padding:4px 10px;border-radius:0;cursor:pointer;text-align:left;transition:background .1s;position:relative;font-size:10px}
+    .litm:hover{background:#f0f0f0}
+    .litm.active{background:none}
+    .litm-name{font-weight:500;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.3}
+    .litm.active .litm-name{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    .litm-del{position:absolute;top:2px;right:2px;width:14px;height:14px;border:none;background:none;border-radius:0;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:8px;color:#000}
+    .litm:hover .litm-del{display:flex}
+    .litm[draggable=true]{cursor:grab}
+    .litm.dragging{opacity:0.4}
+    .addbtn{width:100%;height:24px;margin:0;border:none;background:none;border-radius:0;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0.4;transition:opacity .1s;font-size:12px;color:#000}
+    .addbtn:hover{opacity:1;background:#f0f0f0}
+
+    /* Folders */
+    .folder{width:100%;margin:0;border-radius:0;position:relative}
+    .folder-head{padding:4px 10px;cursor:pointer;text-align:left;border-radius:0;transition:background .1s;position:relative}
+    .folder-head:hover{background:#f0f0f0}
+    .folder-head.active{background:none}
+    .folder-head.active .folder-name{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    .folder-head.drop-over{background:#f0f0f0;outline:1px dashed #000;outline-offset:-1px}
+    .folder-name{font-size:10px;font-weight:600;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.3}
+    .folder-del{position:absolute;top:2px;right:2px;width:14px;height:14px;border:none;background:none;border-radius:0;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:8px;color:#000}
+    .folder-head:hover .folder-del{display:flex}
+    .folder-items{padding:0 0 2px}
+    .folder-items .litm{width:100%;font-size:9px;padding-left:16px}
+    .folder-items .litm-name{font-size:9px}
+    .folder-icon{display:none}
+
+    /* Zoom */
+    .zoom-sec{padding:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #000;position:relative;z-index:1;width:100%}
+    .zbtn{flex:1;height:28px;border:none;background:none;border-radius:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .zbtn:hover{background:#f0f0f0}
+    .zbtn svg path{stroke:#000}
+    .zpct{flex:1;height:28px;font-size:9px;font-weight:500;color:#000;border:none;border-left:1px solid #000;border-right:1px solid #000;background:none;cursor:pointer;font-family:inherit;padding:0;display:flex;align-items:center;justify-content:center}
+
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column;min-width:0}
+    .top{height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#FFF;border-bottom:1px solid #000;z-index:40;position:relative}
+    .top-name,.top-board{font-size:13px;font-weight:600;color:#1C1C1E;letter-spacing:-0.02em;cursor:default;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .top-board{font-weight:500;color:#636366}
+    .top-input{font-size:13px;font-weight:600;color:#1C1C1E;letter-spacing:-0.02em;border:none;outline:none;background:rgba(0,0,0,0.04);border-radius:5px;padding:2px 8px;max-width:200px;font-family:inherit}
+    .top-status{font-size:10px;color:#888;position:absolute;left:50%;transform:translateX(-50%)}
+
+    /* Canvas */
+    .cv{flex:1;position:relative;overflow:hidden;background:#F2F2F7;cursor:grab;display:none}
+    .cv.show{display:block}
+    .cv.panning{cursor:grabbing}.cv.dragging-node{cursor:grabbing}.cv.tool-active{cursor:crosshair}
+    .grd{position:absolute;inset:0;background-image:radial-gradient(circle,#D1D1D6 .7px,transparent .7px);opacity:.4;pointer-events:none}
+    .cv svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+    /* Note editor */
+    .note-editor{flex:1;display:none;flex-direction:column;overflow:hidden;background:#FFF}
+    .note-editor.show{display:flex}
+    .note-body{flex:1;padding:20px 32px;overflow-y:auto;outline:none;font-size:15px;line-height:1.65;color:#1C1C1E;letter-spacing:-0.01em}
+    .note-body:empty::before{content:attr(data-placeholder);color:#AEAEB2}
+    .note-body img{max-width:100%;border-radius:8px;margin:8px 0;display:block;cursor:pointer}
+    .note-body img.nb-resizing{outline:2px solid #007AFF;outline-offset:2px}
+    .note-body.dragover{background:rgba(0,122,255,.04);outline:2px dashed rgba(0,122,255,.3);outline-offset:-4px}
+    .nb-img-wrap{position:relative;display:inline-block;margin:8px 0;max-width:100%}
+    .nb-img-wrap img{display:block;border-radius:8px;cursor:pointer}
+    .nb-img-wrap.selected{outline:2px solid #007AFF;outline-offset:2px;border-radius:10px}
+    .nb-rh{position:absolute;right:-4px;bottom:-4px;width:16px;height:16px;background:#007AFF;border-radius:50%;cursor:nwse-resize;opacity:0;transition:opacity .15s;display:flex;align-items:center;justify-content:center;z-index:5}
+    .nb-img-wrap.selected .nb-rh{opacity:1}
+    .nb-rh::after{content:'';width:6px;height:6px;border-right:2px solid #FFF;border-bottom:2px solid #FFF}
+    .note-toolbar{display:none}
+
+    /* Floating toolbar */
+    .ftb{position:absolute;z-index:100;display:none;flex-direction:column;
+      background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,248,250,.88));
+      backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);
+      border-radius:14px;border:.5px solid rgba(255,255,255,.6);
+      box-shadow:0 8px 40px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.06),inset 0 .5px 0 rgba(255,255,255,.5);
+      padding:6px;gap:2px;user-select:none;min-width:44px;cursor:default}
+    .note-editor.show .ftb{display:flex}
+    .ftb-drag{height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;border-radius:8px;margin:-2px -2px 2px}
+    .ftb-drag:active{cursor:grabbing}
+    .ftb-drag::after{content:'';width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,.12)}
+    .ftb-row{display:flex;align-items:center;gap:1px}
+    .ftb-sep{width:.5px;height:18px;background:rgba(0,0,0,.1);margin:0 3px;flex-shrink:0}
+    .ftb-btn{width:32px;height:30px;border:none;background:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#1C1C1E;transition:background .1s;position:relative;font-family:inherit}
+    .ftb-btn:hover{background:rgba(0,0,0,.06)}
+    .ftb-btn:active{background:rgba(0,0,0,.1)}
+    .ftb-btn.on{background:rgba(0,122,255,.12);color:#007AFF}
+    .ftb-btn i{font-style:italic}
+    .ftb-btn u{text-decoration:underline}
+    .ftb-btn s{text-decoration:line-through}
+    .ftb-color{width:16px;height:16px;border-radius:50%;border:2px solid #FFF;box-shadow:0 0 0 .5px rgba(0,0,0,.15);cursor:pointer}
+    .ftb-cinput{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+    /* Style dropdown */
+    .ftb-dd{position:absolute;bottom:calc(100% + 6px);left:0;min-width:220px;
+      background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,248,250,.92));
+      backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);
+      border-radius:12px;border:.5px solid rgba(255,255,255,.6);
+      box-shadow:0 8px 40px rgba(0,0,0,.15),0 1px 3px rgba(0,0,0,.08);
+      padding:4px;display:none;z-index:110}
+    .ftb-dd.open{display:block}
+    .ftb-ddi{padding:7px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s;color:#1C1C1E}
+    .ftb-ddi:hover{background:rgba(0,0,0,.05)}
+    .ftb-ddi.active{color:#007AFF}
+    .ftb-ddi.active::before{content:'✓';font-size:12px;font-weight:600;position:absolute;left:4px}
+    .ftb-ddi{position:relative;padding-left:20px}
+    .ftb-ddi-title{font-size:20px;font-weight:700}
+    .ftb-ddi-h1{font-size:17px;font-weight:700}
+    .ftb-ddi-h2{font-size:14px;font-weight:600}
+    .ftb-ddi-body{font-size:14px;font-weight:400}
+    .ftb-ddi-mono{font-size:13px;font-family:'SF Mono',Menlo,monospace}
+    .ftb-ddi-bullet::before{content:'• ';font-weight:700}
+    .ftb-ddi-dash::before{content:'— '}
+    .ftb-ddi-num::before{content:'1. '}
+    .ftb-ddi-quote{font-size:14px;font-style:italic;border-left:2px solid #007AFF;padding-left:8px}
+
+    /* Note content styles */
+    .note-body h1{font-size:26px;font-weight:700;line-height:1.25;margin:4px 0}
+    .note-body h2{font-size:20px;font-weight:700;line-height:1.3;margin:3px 0}
+    .note-body h3{font-size:16px;font-weight:600;line-height:1.35;margin:2px 0}
+    .note-body blockquote{border-left:3px solid #007AFF;padding-left:12px;margin:6px 0;color:#636366;font-style:italic}
+    .note-body pre{font-family:'SF Mono',Menlo,monospace;font-size:13px;background:rgba(0,0,0,.03);padding:8px 12px;border-radius:8px;margin:6px 0;white-space:pre-wrap}
+    .note-body ul,.note-body ol{padding-left:24px;margin:4px 0}
+    .note-body li{margin:2px 0}
+
+    /* Nodes */
+    .nd{position:absolute;background:#FFF;border-radius:12px;border:1px solid #1C1C1E;box-shadow:none;z-index:2;overflow:visible;transition:border-color .12s;will-change:left,top}
+    .nd.dragging{transition:none!important;z-index:20}
+    .nd.sel{border-color:#000;border-width:1.5px;box-shadow:none;z-index:10}
+    .nd.conn-src{border-color:#007AFF;border-width:1.5px}
+    .nd-inner{width:100%;min-height:inherit}
+    .nd-text{font-size:11px;font-weight:400;color:#1C1C1E;letter-spacing:-.01em;word-break:break-word;white-space:pre-wrap;width:100%;line-height:1.45}
+    .nd-text img{max-width:100%;height:auto;display:block;margin:4px 0;border-radius:4px;pointer-events:none}
+    .nd-text.ph{opacity:.35}
+    .nd textarea{width:100%;min-height:60px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;resize:none;padding:0;margin:0;line-height:1.45}
+    .nd-edit{width:100%;min-height:40px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;line-height:1.45;word-break:break-word}
+    .nd-edit:empty::before{content:'двойной клик…';color:#AEAEB2;pointer-events:none}
+    .nd-edit{min-height:32px;outline:none}
+    .nd-edit img{max-width:100%;height:auto;display:block;margin:4px 0;border-radius:4px}
+    .nd-edit.dragover{outline:1px dashed #000;outline-offset:-2px}
+    .nd-img-add{display:none;align-items:center;justify-content:center;font-size:9px;color:#888;border:1px dashed #ccc;padding:4px;margin-top:4px;cursor:pointer}
+    .nd-img-add:hover{color:#000;border-color:#000}
+    .nd-edit ~ .nd-img-add{display:flex}
+    .cl-item{display:flex;align-items:flex-start;gap:6px;padding:2px 0}
+    .cl-cb{width:16px;height:16px;margin-top:1px;accent-color:#007AFF;cursor:pointer;flex-shrink:0}
+    .cl-txt{font-size:13px;color:#1C1C1E;line-height:1.4;flex:1;border:none;outline:none;background:none;font-family:inherit}
+    .cl-txt.done{text-decoration:line-through;color:#AEAEB2}
+    .cl-add{font-size:12px;color:#8E8E93;cursor:pointer;border:none;background:none;font-family:inherit;padding:4px 0}
+    .cl-add:hover{color:#007AFF}
+    .cal{padding:6px}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+    .cal-title{font-size:11px;font-weight:600;color:#1C1C1E}
+    .cal-nav{border:none;background:none;cursor:pointer;font-size:14px;color:#8E8E93;padding:0 4px}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+    .cal-dow{font-size:8px;color:#AEAEB2;font-weight:600;padding:2px 0}
+    .cal-day{font-size:10px;color:#1C1C1E;padding:3px 0;border-radius:50%;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:background .1s}
+    .cal-day:hover{background:rgba(0,0,0,.04)}
+    .cal-day.today{border:1px solid #000}
+    .cal-day.empty{visibility:hidden}
+
+    /* Calculator */
+    .calc{width:100%;display:flex;flex-direction:column;gap:3px}
+    .calc-display{width:100%;text-align:right;font-size:18px;font-weight:500;color:#000;padding:4px 6px;border:none;background:#f5f5f5;border-radius:4px;font-family:'SF Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:28px;line-height:28px;box-sizing:border-box}
+    .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+    .calc-btn{border:none;padding:5px 0;font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;text-align:center;background:#f0f0f0;color:#000;transition:background .1s}
+    .calc-btn:hover{background:#e0e0e0}
+    .calc-btn:active{background:#ccc}
+    .calc-btn.op{background:#000;color:#FFF}
+    .calc-btn.op:hover{background:#333}
+    .calc-btn.eq{background:#000;color:#FFF}
+    .calc-btn.eq:hover{background:#333}
+    .calc-btn.clr{color:#000;font-weight:600}
+
+    /* Table */
+    .tbl-wrap{width:100%;display:flex;flex-direction:column;gap:3px}
+    .tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+    .tbl td{border:1px solid #ccc;padding:3px 5px;font-size:11px;color:#000;vertical-align:top;cursor:text;outline:none;font-family:inherit;word-break:break-word;empty-cells:show;height:22px;overflow:hidden}
+    .tbl td:focus{border-color:#000;background:#fafafa}
+    .tbl tr:first-child td{font-weight:600;background:#f5f5f5}
+    .tbl-actions{display:flex;gap:4px;justify-content:flex-start}
+    .tbl-ab{border:none;background:none;cursor:pointer;font-size:9px;color:#888;font-family:inherit;padding:2px 4px}
+    .tbl-ab:hover{color:#000}
+
+    /* Timer */
+    .tmr{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0}
+    .tmr-display{font-size:22px;font-weight:600;color:#000;font-family:'SF Mono',Menlo,monospace;letter-spacing:0.05em}
+    .tmr-display.running{color:#000}
+    .tmr-display.done{color:#888;animation:tmrBlink 1s infinite}
+    @keyframes tmrBlink{0%,100%{opacity:1}50%{opacity:0.3}}
+    .tmr-controls{display:flex;gap:4px}
+    .tmr-btn{border:1px solid #ccc;background:none;cursor:pointer;font-size:9px;font-family:inherit;color:#000;padding:3px 8px;transition:background .1s}
+    .tmr-btn:hover{background:#f0f0f0}
+    .tmr-btn.go{border-color:#000}
+    .tmr-set{display:flex;gap:2px;align-items:center}
+    .tmr-inp{width:28px;border:1px solid #ccc;text-align:center;font-size:11px;font-family:'SF Mono',Menlo,monospace;padding:2px 0;color:#000;outline:none}
+    .tmr-inp:focus{border-color:#000}
+    .tmr-sep{font-size:11px;color:#888}
+    .tmr-magnet{font-size:8px;color:#888;cursor:pointer;margin-top:2px}
+    .tmr-magnet:hover{color:#000}
+    .tmr-magnet.linked{color:#000;font-weight:600}
+    .tmr-mode{display:flex;gap:0;margin-bottom:4px;width:100%}
+    .tmr-mode-btn{flex:1;border:1px solid #ccc;background:none;font-size:8px;font-family:inherit;color:#888;padding:3px 0;cursor:pointer;transition:all .1s}
+    .tmr-mode-btn:first-child{border-right:none}
+    .tmr-mode-btn.active{background:#000;color:#FFF;border-color:#000}
+    .tmr-date-inp{border:1px solid #ccc;font-size:11px;font-family:inherit;color:#000;padding:3px 6px;outline:none;width:100%;text-align:center;box-sizing:border-box}
+    .tmr-date-inp:focus{border-color:#000}
+    .tmr-countdown{font-size:10px;color:#888;margin-top:2px;text-align:center}
+    .tmr-countdown.overdue{color:#000;font-weight:600}
+
+    /* Shapes */
+    .shp{width:100%;height:100%;display:flex;align-items:center;justify-content:center;min-height:inherit}
+    .shp-body{width:100%;min-height:inherit;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .shp-body.circle{border-radius:50%}
+    .shp-body.square{border-radius:0}
+    .shp-text{color:#FFF;font-size:13px;font-weight:500;text-align:center;outline:none;width:80%;word-break:break-word;font-family:inherit;padding:8px;line-height:1.4;min-height:1em;cursor:text}
+    .shp-text:empty::before{content:'текст...';color:rgba(255,255,255,0.3);pointer-events:none}
+    .shp-pick{display:flex;gap:12px;align-items:center;justify-content:center;width:100%;height:100%;min-height:inherit}
+    .shp-opt{width:40px;height:40px;background:#000;cursor:pointer;transition:transform .15s;display:flex;align-items:center;justify-content:center}
+    .shp-opt:hover{transform:scale(1.2)}
+    .shp-opt.circle{border-radius:50%}
+
+    /* Lamp */
+    .lamp{width:100%;height:100%;display:flex;align-items:center;justify-content:center;min-height:inherit;position:relative;overflow:hidden;pointer-events:none;border-radius:50%}
+    .lamp-core{width:36%;height:0;padding-bottom:36%;border-radius:50%;background:#000;position:relative;z-index:2;pointer-events:none}
+    .lamp-aura{position:absolute;inset:-30%;border-radius:50%;z-index:1;animation:lampPulse 3s ease-in-out infinite;pointer-events:none}
+    .lamp-aura-1{background:radial-gradient(circle,rgba(0,0,0,0.12) 0%,rgba(0,0,0,0.04) 40%,transparent 70%)}
+    .lamp-aura-2{inset:-50%;background:radial-gradient(circle,rgba(0,0,0,0.06) 0%,rgba(0,0,0,0.02) 35%,transparent 65%);animation-delay:1s}
+    .lamp-aura-3{inset:-70%;background:radial-gradient(circle,rgba(0,0,0,0.03) 0%,transparent 50%);animation-delay:2s}
+    @keyframes lampPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.7}}
+    .lamp-label{position:absolute;bottom:4px;width:100%;text-align:center;font-size:9px;font-weight:500;color:#000;outline:none;font-family:inherit;z-index:3;pointer-events:auto}
+    .lamp-label:empty::before{content:'фокус';color:#ccc;pointer-events:none}
+    .lamp-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,0,0,0.08);z-index:1;pointer-events:none}
+    .lamp-ring-1{inset:15%;border-color:rgba(0,0,0,0.1)}
+    .lamp-ring-2{inset:5%;border-color:rgba(0,0,0,0.06)}
+    .lamp-ring-3{inset:-5%;border-color:rgba(0,0,0,0.03)}
+    .nd-img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block;cursor:grab;pointer-events:none}
+    .img-placeholder{width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;cursor:pointer;border-radius:11px}
+    /* Grid tool */
+    .grd-pick{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;gap:10px}
+    .grd-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #1C1C1E;cursor:pointer;font-weight:600;color:#1C1C1E;transition:background .1s;padding:8px 10px}
+    .grd-opt:hover{background:#f0f0f0}
+    .grd-opt-ratio{opacity:.45;font-weight:400}
+    .grd-frame{width:100%;height:100%;position:relative;overflow:hidden;border-radius:10px}
+    .grd-img{width:100%;height:100%;object-fit:cover;display:block}
+    .grd-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fafafa;cursor:pointer}
+    .grd-empty:hover .grd-plus{border-color:#000}
+    .grd-badge{font-size:8px;font-weight:600;letter-spacing:.08em;color:#888;text-transform:uppercase}
+    .grd-plus{font-size:11px;color:#1C1C1E;border:1px dashed #ccc;padding:5px 14px;transition:border-color .1s}
+    .grd-swap{position:absolute;top:6px;right:6px;width:22px;height:22px;background:rgba(255,255,255,.85);border:1px solid #ccc;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;opacity:0;transition:opacity .15s}
+    .grd-frame:hover .grd-swap{opacity:1}
+    .rh{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:nwse-resize;opacity:.4;z-index:50}
+    .na{display:none !important}
+    .na button{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;background:none;border-radius:6px;cursor:pointer}
+    .na button:hover{background:rgba(0,0,0,.04)}
+    .empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:1}
+    .empty p:first-child{font-size:15px;font-weight:500;color:#8E8E93}
+    .empty p:last-child{font-size:13px;color:#AEAEB2;margin-top:6px}
+    .badge{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#007AFF;font-weight:500;padding:6px 14px;border-radius:8px;background:rgba(0,122,255,.08);z-index:50;pointer-events:none}
+
+    /* Folder view cards */
+    .fv-card{position:absolute;width:180px;min-height:80px;background:#FFF;border-radius:14px;border:.5px solid #E5E5EA;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px 12px;transition:transform .15s,box-shadow .15s,border-color .15s;z-index:2;user-select:none}
+    .fv-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1);border-color:#007AFF}
+    .fv-card:active{transform:scale(.97)}
+    .fv-icon{font-size:28px;line-height:1}
+    .fv-name{font-size:13px;font-weight:600;color:#1C1C1E;text-align:center;word-break:break-word;letter-spacing:-.01em}
+    .fv-meta{font-size:10px;color:#AEAEB2;font-weight:500}
+    .fv-empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:1}
+    .fv-empty p:first-child{font-size:28px;margin-bottom:8px}
+    .fv-empty p:nth-child(2){font-size:15px;font-weight:500;color:#8E8E93}
+    .fv-empty p:last-child{font-size:13px;color:#AEAEB2;margin-top:6px}
+    /* Comment node */
+    .cmt{width:100%;display:flex;flex-direction:column;gap:0}
+    .cmt-head{display:flex;align-items:center;justify-content:space-between;gap:4px;cursor:pointer;padding:4px 0 3px}
+    .cmt-from-wrap{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+    .cmt-avatar{width:18px;height:18px;border-radius:50%;background:#1C1C1E;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase}
+    .cmt-from{font-size:9px;font-weight:600;color:#1C1C1E;border:none;outline:none;background:none;font-family:inherit;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text}
+    .cmt-from::placeholder{color:#AEAEB2;font-weight:400}
+    .cmt-toggle{font-size:9px;color:#888;flex-shrink:0;transition:transform .15s;line-height:1}
+    .cmt-toggle.open{transform:rotate(180deg)}
+    .cmt-body{overflow:hidden;max-height:0;transition:max-height .2s ease,opacity .15s;opacity:0}
+    .cmt-body.open{max-height:200px;opacity:1}
+    .cmt-divider{height:1px;background:#f0f0f0;margin:2px 0}
+    .cmt-text{width:100%;border:none;outline:none;background:none;font-family:inherit;color:#1C1C1E;resize:none;line-height:1.45;min-height:48px;padding:4px 0 2px}
+    .cmt-text::placeholder{color:#AEAEB2}
+    .cmt-footer{display:flex;align-items:center;justify-content:space-between;padding:2px 0 0}
+    .cmt-magnet{font-size:8px;color:#888;cursor:pointer}
+    .cmt-magnet:hover{color:#000}
+    .cmt-magnet.linked{color:#000;font-weight:600}
+    /* Doc viewer */
+    #panelDoc{width:520px}
+    #docBody h2{font-size:14px;font-weight:700;margin:18px 0 6px;color:#000}
+    #docBody h2:first-child{margin-top:0}
+    #docBody p{margin:0 0 10px;color:#444}
+    #docBody ul{padding-left:18px;margin:0 0 10px}
+    #docBody li{margin-bottom:4px;color:#444}
+    #docBody strong{color:#1C1C1E;font-weight:600}
+    /* Cookie banner */
+    .cookie{position:fixed;bottom:0;left:0;right:0;height:36px;background:#fff;border-top:1px solid #000;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 12px;z-index:9998;gap:12px}
+    .cookie.hidden{display:none}
+    .cookie-text{font-size:10px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cookie-text a{color:#000;text-underline-offset:2px}
+    .cookie-btns{display:flex;gap:6px;flex-shrink:0}
+    .cookie-btn{height:22px;padding:0 10px;border:1px solid #000;background:none;font-size:9px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .1s,color .1s}
+    .cookie-btn:hover{background:#f0f0f0}
+    .cookie-btn.accept{background:#000;color:#fff;border-color:#000}
+    .cookie-btn.accept:hover{background:#333}
+    /* Share view mode */
+    .share-view .lp{display:none}
+    .share-view .top{display:none}
+    .share-view .cv{cursor:grab}
+    .share-view .rh{display:none}
+    .share-view-badge{position:fixed;bottom:20px;right:20px;font-size:11px;color:#888;background:#fff;border:1px solid #e5e5ea;padding:8px 14px;z-index:999;pointer-events:none;letter-spacing:.02em}
+    /* Share link button */
+    .exp-divider{height:1px;background:#e5e5ea;margin:14px 0}
+    .exp-share-btn{width:100%;padding:10px;border:1px solid #1C1C1E;background:#fff;color:#1C1C1E;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:0;transition:background .1s}
+    .exp-share-btn:hover{background:#f5f5f5}
+    /* Toast */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:#1C1C1E;color:#fff;font-size:12px;padding:8px 18px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;letter-spacing:.02em}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    /* Share panel */
+
+    /* ─── Mobile stub ─── */
+    .mob-stub{display:none;position:fixed;inset:0;background:#fff;z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center}
+    @media(max-width:1024px){.mob-stub{display:flex}}
+  </style>
+</head>
+<body>
+<div class="splash" id="splash">
+  <div class="splash-card">
+    <div class="splash-logo-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 140" width="100%" style="display:block">
+        <text x="300" y="110" text-anchor="middle" font-family="-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif" font-size="124" font-weight="700" fill="#000000" letter-spacing="2">ка-би-нéт</text>
+      </svg>
+    </div>
+    <div class="splash-tagline">визуальный планер / майнд-карта / доска<br>для ваших идей и проектов</div>
+    <div class="splash-tabs">
+      <button class="splash-tab active" id="tabLogin">войти</button>
+      <button class="splash-tab" id="tabReg">зарегистрироваться</button>
+    </div>
+    <div class="splash-fields">
+      <input class="splash-input" id="authName" type="text" placeholder="имя" autocomplete="name" style="display:none">
+      <input class="splash-input" id="authEmail" type="email" placeholder="email" autocomplete="email">
+      <input class="splash-input" id="authPass" type="password" placeholder="пароль" autocomplete="current-password">
+    </div>
+    <div class="splash-err" id="authErr"></div>
+    <button class="splash-btn" id="authBtn">войти</button>
+    <div class="splash-demo" id="demoBtn">продолжить без входа →</div>
+
+  </div>
+</div>
+<div class="mob-stub">
+  <div style="font-size:24px;font-weight:700;letter-spacing:.06em;margin-bottom:14px">ка-би-нéт</div>
+  <div style="font-size:13px;color:#636366;line-height:1.8;margin-bottom:28px">мобильная версия<br>скоро будет доступна</div>
+  <div style="font-size:12px;color:#888;line-height:2">пока используйте<br>десктопную версию на<br><strong style="color:#000;font-weight:600">ka-bi-net.ru</strong></div>
+</div>
+<div id="app">
+
+  <div class="lp" id="lp"></div>
+  <div class="main">
+    <div class="top" style="position:relative">
+      <span class="top-name" id="pname"></span>
+      <span class="top-status" id="sstat"></span>
+      <span class="top-board" id="bname"></span>
+    </div>
+    <div class="cv" id="cv">
+      <div class="grd" id="grd"></div>
+      <svg id="sl"></svg>
+      <div class="empty" id="emp"><p>двойной клик — новая нода</p><p>drag — навигация · scroll — зум</p></div>
+    </div>
+    <div class="note-editor" id="ne">
+      <div class="note-body" id="nb" contenteditable="true" data-placeholder="начни писать…"></div>
+      <div class="ftb" id="ftb">
+        <div class="ftb-drag" id="ftbDrag"></div>
+        <div class="ftb-row">
+          <button class="ftb-btn" data-cmd="bold" title="Жирный"><b>B</b></button>
+          <button class="ftb-btn" data-cmd="italic" title="Курсив"><i>I</i></button>
+          <button class="ftb-btn" data-cmd="underline" title="Подчёркнутый"><u>U</u></button>
+          <button class="ftb-btn" data-cmd="strikeThrough" title="Зачёркнутый"><s>S</s></button>
+          <div class="ftb-sep"></div>
+          <button class="ftb-btn" id="ftbStyle" title="Стиль текста"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 12h10M5 3v9M8 3H2M11 6l2.5 6M13.5 12L11 6M11.5 10h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="ftb-sep"></div>
+          <button class="ftb-btn" style="padding:0;overflow:hidden" title="Цвет"><div class="ftb-color" id="ftbClr" style="background:#1C1C1E"></div><input type="color" class="ftb-cinput" id="ftbClrIn" value="#1C1C1E"></button>
+          <button class="ftb-btn" id="ftbPhoto" title="Вставить фото"><svg width="16" height="16" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7.5" r="1.5" stroke="currentColor" stroke-width="1"/><path d="M3 13l4-4 3 3 2-2 3 3" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div class="ftb-dd" id="ftbDD">
+          <div class="ftb-ddi" data-style="h1"><span class="ftb-ddi-title">Название</span></div>
+          <div class="ftb-ddi" data-style="h2"><span class="ftb-ddi-h1">Заголовок</span></div>
+          <div class="ftb-ddi" data-style="h3"><span class="ftb-ddi-h2">Подзаголовок</span></div>
+          <div class="ftb-ddi active" data-style="p"><span class="ftb-ddi-body">Основной текст</span></div>
+          <div class="ftb-ddi" data-style="pre"><span class="ftb-ddi-mono">Моноширинный шрифт</span></div>
+          <div class="ftb-ddi" data-style="ul"><span class="ftb-ddi-body">• Маркированный список</span></div>
+          <div class="ftb-ddi" data-style="ul-dash"><span class="ftb-ddi-body">— Список с тире</span></div>
+          <div class="ftb-ddi" data-style="ol"><span class="ftb-ddi-body">1. Нумерованный список</span></div>
+          <div class="ftb-ddi" data-style="blockquote"><span class="ftb-ddi-quote">Блок цитаты</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guide panel -->
+<div class="panel panel-wide" id="panelGuide">
+  <div class="panel-head"><span>инструкция и FAQ</span><button class="panel-close" data-close="guide">✕</button></div>
+  <div class="panel-body panel-scroll">
+
+    <div class="guide-section-title">→ с чего начать</div>
+
+    <div class="guide-step">
+      <span class="guide-num">1</span>
+      <div>
+        <b>зарегистрируйся</b>
+        <p>без регистрации войти в приложение невозможно. введи email и придумай пароль — это занимает 30 секунд. после этого у тебя есть 7 дней полного бесплатного доступа ко всем функциям.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-num">2</span>
+      <div>
+        <b>создай доску</b>
+        <p>слева в боковой панели найди раздел «доски» и нажми <b>+</b>. появится новая пустая доска. кликни на название доски вверху справа чтобы переименовать её.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-num">3</span>
+      <div>
+        <b>добавь первый элемент</b>
+        <p><b>дважды кликни</b> в любом месте серого холста — появится текстовая нода, сразу начинай печатать. внутри ноды можно писать текст и добавлять фото. хочешь другой тип элемента — выбери нужный инструмент в левой панели, затем дважды кликни на холст.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-num">4</span>
+      <div>
+        <b>двигай и меняй размер</b>
+        <p>зажми элемент и тяни — он переместится. потяни за <b>нижний правый угол</b> — изменится размер.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-num">5</span>
+      <div>
+        <b>навигация по холсту</b>
+        <p>зажми пустое место и тяни — холст двигается. крути колёсико — зум. кнопки − и + внизу слева тоже работают. нажми «100%» чтобы вернуться к нормальному масштабу.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-num">6</span>
+      <div>
+        <b>сохранение</b>
+        <p>нажми кнопку «сохранить» в левой панели чтобы зафиксировать последние изменения. твои доски хранятся в облаке — можно открыть с любого устройства войдя в свой аккаунт.</p>
+      </div>
+    </div>
+
+    <div class="guide-divider"></div>
+    <div class="guide-section-title">→ все инструменты</div>
+
+    <div class="guide-step">
+      <span class="guide-icon">✦</span>
+      <div><b>нода</b>
+        <p>основной блок. двойной клик — редактировать. пиши текст, вставляй картинки прямо внутрь (перетащи файл или нажми «+ фото»).</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">☐</span>
+      <div><b>список</b>
+        <p>чеклист с чекбоксами. Enter — новый пункт. Backspace на пустом пункте — удалить. для to-do и пошаговых задач.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">▦</span>
+      <div><b>календарь</b>
+        <p>мини-календарь прямо на доске. сегодняшняя дата отмечена чёрным кружком. переключай месяцы стрелками.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">№</span>
+      <div><b>калькулятор</b>
+        <p>обычный калькулятор встроенный в блок. считай прямо на доске.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">⊞</span>
+      <div><b>таблица</b>
+        <p>кликни на ячейку — редактируй. добавляй строки и столбцы кнопками + на краях. для сравнений, бюджетов, расписаний.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">◷</span>
+      <div><b>таймер</b>
+        <p>обратный отсчёт или дата дедлайна. примагнивается к соседнему блоку — поедет вместе с ним если подвинешь.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">■</span>
+      <div><b>фигура</b>
+        <p>отдельный элемент — чёрный квадрат или круг. пиши внутри белым текстом. используй как стикер, акцент или визуальный разделитель.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">◎</span>
+      <div><b>лампа</b>
+        <p>пульсирующая точка-маркер. ставь туда куда сейчас важно смотреть — на главную задачу или срочный вопрос.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">⬚</span>
+      <div><b>изображение</b>
+        <p>отдельный блок только для фото. кликни — выбери файл. или перетащи картинку прямо на холст.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">↗</span>
+      <div><b>связь</b>
+        <p>выбери инструмент, кликни по первому блоку — потом по второму. между ними появится кривая линия.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">⊡</span>
+      <div><b>грид</b>
+        <p>сетка для планирования ленты. выбери формат поста — появится сетка с нужными пропорциями. закидывай фото, планируй визуал.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">◯</span>
+      <div><b>комментарий</b>
+        <p>стикер-заметка. пиши комментарии к элементам доски. сворачивается чтобы не мешать.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">↩</span>
+      <div><b>отмена / повтор</b>
+        <p>отменить последнее действие или вернуть его обратно. кнопки ↩ ↪ в верхней панели или Ctrl+Z / Ctrl+Y.</p>
+      </div>
+    </div>
+
+    <div class="guide-divider"></div>
+    <div class="guide-section-title">→ частые вопросы</div>
+
+    <div class="guide-qa">
+      <div class="guide-q">можно ли попробовать бесплатно?</div>
+      <div class="guide-a">да. после регистрации у тебя есть 7 дней полного бесплатного доступа ко всем функциям. никакой карты не нужно. если не понравится — просто не платишь.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">что происходит после 7 дней?</div>
+      <div class="guide-a">доступ блокируется до оплаты. все твои доски и данные сохраняются — ничего не удаляется. оплатил подписку — всё сразу открывается.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">сколько стоит подписка?</div>
+      <div class="guide-a">299 ₽ в месяц или 2500 ₽ в год (экономия ~1100 ₽). один тариф — в нём доступны все функции без ограничений.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">можно ли вернуть деньги?</div>
+      <div class="guide-a">нет. именно поэтому у тебя есть 7 дней бесплатного пробного периода — чтобы убедиться что всё подходит до оплаты.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">где хранятся мои данные?</div>
+      <div class="guide-a">в облаке — на серверах Яндекса. это значит: войди в свой аккаунт с любого компьютера и все твои доски будут там. данные не привязаны к одному устройству.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">есть мобильное приложение?</div>
+      <div class="guide-a">мобильная версия пока недоступна. используй ка-би-нéт на компьютере — в любом браузере.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">как поделиться доской с другим человеком?</div>
+      <div class="guide-a">нажми «поделиться» в левой панели — скопируй ссылку и отправь. человек откроет доску в режиме просмотра, редактировать не сможет. если хочешь чтобы кто-то внёс правки — он может зарегистрироваться, ты даёшь ему доступ к своему аккаунту и он редактирует с него.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">как удалить элемент на доске?</div>
+      <div class="guide-a">кликни на элемент чтобы выделить его, затем нажми Delete на клавиатуре. случайно удалил — используй ↩ отмену в верхней панели.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">как удалить доску?</div>
+      <div class="guide-a">наведи мышку на название доски в боковой панели — справа появится ✕. нажми его. доска удалится вместе со всем содержимым без возможности восстановления.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">как переименовать доску?</div>
+      <div class="guide-a">кликни на название доски вверху справа — оно станет редактируемым. введи новое название, нажми Enter или кликни в сторону.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">что такое заметки? чем отличаются от досок?</div>
+      <div class="guide-a">заметка — это обычный текстовый редактор без холста. удобна для длинных записей, конспектов, текстов. доска — для визуального планирования с блоками, линиями и фото. используй то что подходит под задачу.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">что такое папки?</div>
+      <div class="guide-a">способ организовать доски и заметки в группы. нажми + в разделе «папки», затем перетащи в неё нужные доски или заметки. папку можно свернуть — скроет всё что внутри.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">приложение тормозит — что делать?</div>
+      <div class="guide-a">если на доске очень много элементов (50+) браузер может замедляться. разбей одну большую доску на несколько поменьше. если не помогает — напиши нам.</div>
+    </div>
+
+    <div class="guide-qa">
+      <div class="guide-q">нашла баг или есть вопрос — куда писать?</div>
+      <div class="guide-a">пиши на <b>hello@ninarkremer.com</b> — каждое сообщение читается лично.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Account panel -->
+<div class="panel-overlay" id="panelOverlay"></div>
+<div class="panel" id="panelAccount">
+  <div class="panel-head"><span>мой аккаунт</span><button class="panel-close" data-close="account">✕</button></div>
+  <div class="panel-body">
+    <div class="panel-greeting" id="accGreeting"></div>
+    <div class="panel-field"><label>email</label><input type="email" id="accEmail" placeholder="email@example.com"></div>
+    <div class="panel-field"><label>тариф</label><div class="panel-plan"><span class="plan-badge">триал</span><span class="plan-text">7 дней бесплатно</span></div></div>
+    <div class="panel-divider"></div>
+    <div class="panel-prices">
+      <div class="panel-price active"><span class="pp-period">месяц</span><span class="pp-amount">299 ₽</span></div>
+      <div class="panel-price"><span class="pp-period">год</span><span class="pp-amount">2 500 ₽</span><span class="pp-save">экономия 17%</span></div>
+    </div>
+    <button class="panel-btn">подключить подписку</button>
+    <button class="panel-btn-out">выйти</button>
+  </div>
+</div>
+
+<!-- Info panel -->
+<div class="panel" id="panelInfo">
+  <div class="panel-head"><span>информация</span><button class="panel-close">✕</button></div>
+  <div class="panel-body">
+    <p class="panel-about">кабинет — визуальный планер для идей, проектов и целей</p>
+    <div class="panel-divider"></div>
+    <div class="panel-row"><span>версия</span><span>1.0</span></div>
+    <div class="panel-row"><span>разработчик</span><span>Nina Kremer</span></div>
+    <div class="panel-divider"></div>
+    <div class="panel-link" id="docPrivacy">политика конфиденциальности</div>
+    <div class="panel-link" id="docTerms">пользовательское соглашение</div>
+    <div class="panel-link" id="docConsent">согласие на обработку данных</div>
+    <div class="panel-divider"></div>
+    <p class="panel-copy">© 2026 <a href="https://ninarkremer.com" target="_blank" style="color:#000;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px">Nina Kremer</a></p>
+  </div>
+</div>
+
+<!-- Doc viewer panel -->
+<div class="panel" id="panelDoc" style="width:520px;max-height:80vh;display:none">
+  <div class="panel-head">
+    <span id="docTitle"></span>
+    <button class="panel-close" id="docClose">✕</button>
+  </div>
+  <div id="docBody" style="padding:20px 24px;overflow-y:auto;max-height:calc(80vh - 48px);font-size:13px;line-height:1.7;color:#1C1C1E"></div>
+</div>
+
+<!-- Share panel -->
+<div class="panel" id="panelExport">
+  <div class="panel-head"><span>поделиться</span><button class="panel-close">✕</button></div>
+  <div class="panel-body">
+    <p style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.5">ссылка откроет доску в режиме просмотра — без редактирования</p>
+    <button class="exp-share-btn" id="shareBtn">скопировать ссылку</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="cookie hidden" id="cookieBanner">
+  <span class="cookie-text">мы используем куки для работы приложения и аналитики. продолжая использование, вы соглашаетесь с <span id="cookiePrivacyLink" style="color:#000;text-decoration:underline;text-underline-offset:2px;cursor:pointer">политикой конфиденциальности</span></span>
+  <div class="cookie-btns">
+    <button class="cookie-btn" id="cookieDecline">только нужные</button>
+    <button class="cookie-btn accept" id="cookieAccept">принять все</button>
+  </div>
+</div>
+
+<input type="file" id="fup" accept="image/*" style="display:none">
+<script>
+// ─── Splash ───
+// ─── Auth splash ───
+;(()=>{
+  const splash=document.getElementById('splash')
+  if(!splash)return
+  // if already "logged in" via demo flag, skip
+  if(sessionStorage.getItem('kabinet-session')){splash.remove();return}
+  // blur the app behind — only now when splash is actually showing
+  const appEl=document.getElementById('app')
+  appEl.classList.add('blurred')
+
+  let mode='login'
+  const tabLogin=document.getElementById('tabLogin')
+  const tabReg=document.getElementById('tabReg')
+  const authBtn=document.getElementById('authBtn')
+  const authErr=document.getElementById('authErr')
+  const demoBtn=document.getElementById('demoBtn')
+  const emailInp=document.getElementById('authEmail')
+  const passInp=document.getElementById('authPass')
+
+  function setMode(m){
+    mode=m
+    tabLogin.classList.toggle('active',m==='login')
+    tabReg.classList.toggle('active',m==='register')
+    authBtn.textContent=m==='login'?'войти':'создать аккаунт'
+    authErr.textContent=''
+    const nameInp=document.getElementById('authName')
+    if(nameInp)nameInp.style.display=m==='register'?'block':'none'
+  }
+
+  tabLogin.addEventListener('click',()=>setMode('login'))
+  tabReg.addEventListener('click',()=>setMode('register'))
+
+
+  function handleAuth(){
+    const email=emailInp.value.trim()
+    const pass=passInp.value
+    if(mode==='register'){const n=document.getElementById('authName')?.value.trim();if(!n){authErr.textContent='введи своё имя';return}}
+    if(!email||!email.includes('@')){authErr.textContent='введи корректный email';return}
+    if(pass.length<6){authErr.textContent='пароль минимум 6 символов';return}
+    authErr.textContent=''
+    // UI feedback — in real app here goes API call
+    authBtn.textContent='...'
+    setTimeout(()=>{
+      // store session for this browser session
+      sessionStorage.setItem('kabinet-session',email)
+      const nameVal=document.getElementById('authName')?.value.trim()
+      if(nameVal&&mode==='register')sessionStorage.setItem('kabinet-username',nameVal)
+      if(appEl)appEl.classList.remove('blurred')
+      splash.remove()
+    },600)
+  }
+
+  authBtn.addEventListener('click', handleAuth)
+  authBtn.addEventListener('touchend', e=>{e.preventDefault(); handleAuth()})
+  // enter key
+  passInp.addEventListener('keydown',e=>{if(e.key==='Enter')authBtn.click()})
+  emailInp.addEventListener('keydown',e=>{if(e.key==='Enter')passInp.focus()})
+
+  function enterDemo(){
+    sessionStorage.setItem('kabinet-session','demo')
+    document.getElementById('app').classList.remove('blurred')
+    splash.remove()
+  }
+  demoBtn.addEventListener('click', enterDemo)
+  demoBtn.addEventListener('touchend', e=>{e.preventDefault(); enterDemo()})
+})()
+
+const SK='karta-v4',ZS=[.25,.5,.75,1,1.25,1.5,2,3]
+let D,sel=null,edt=null,cf=null,tool='hand'
+let drag=null,rsz=null,pan=null,mx=0,my=0,lct=0,lcx=0,lcy=0,imgCb=null
+let dragItem=null // for sidebar drag'n'drop
+let undoStack=[],redoStack=[],undoPause=false
+
+const $=id=>document.getElementById(id)
+const cv=$('cv'),sl=$('sl'),grd=$('grd'),emp=$('emp'),ss=$('sstat'),zl=null
+const pn=$('pname'),bn=$('bname'),lp=$('lp'),ne=$('ne'),nb=$('nb'),fup=$('fup')
+
+function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+// ─── Storage ───
+let shareMode=false
+function load(){
+  // check for shared board in URL hash
+  const hash=location.hash.slice(1)
+  if(hash&&hash.startsWith('s=')){
+    try{
+      const json=LZString.decompressFromEncodedURIComponent(hash.slice(2))
+      const board=JSON.parse(json)
+      const bid=gid()
+      D={pname:board.name||'доска',boards:[{...board,id:bid,fid:null}],notes:[],folders:[],active:{type:'board',id:bid}}
+      shareMode=true
+      return
+    }catch(e){console.warn('share decode failed',e)}
+  }
+  try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);if(d.boards){D=d;return}}}catch(e){}
+  const bid=gid()
+  D={pname:sessionStorage.getItem('kabinet-username')||'мой проект',boards:[{id:bid,name:'новая доска',fid:null,nodes:[],conns:[],vp:{x:0,y:0,z:1},nid:1}],notes:[],folders:[],active:{type:'board',id:bid}}
+}
+let st=null
+function pushUndo(){
+  if(undoPause)return
+  undoStack.push(JSON.stringify(D))
+  if(undoStack.length>50)undoStack.shift()
+  redoStack=[]
+  updateUndoButtons()
+}
+function undo(){
+  if(!undoStack.length)return
+  redoStack.push(JSON.stringify(D))
+  undoPause=true
+  D=JSON.parse(undoStack.pop())
+  localStorage.setItem(SK,JSON.stringify(D))
+  undoPause=false
+  R();updateUndoButtons()
+}
+function redo(){
+  if(!redoStack.length)return
+  undoStack.push(JSON.stringify(D))
+  undoPause=true
+  D=JSON.parse(redoStack.pop())
+  localStorage.setItem(SK,JSON.stringify(D))
+  undoPause=false
+  R();updateUndoButtons()
+}
+function updateUndoButtons(){
+  const u=document.getElementById('btnUndo'),r=document.getElementById('btnRedo')
+  if(u)u.style.opacity=undoStack.length?'1':'.3'
+  if(r)r.style.opacity=redoStack.length?'1':'.3'
+}
+function save(){pushUndo();clearTimeout(st);st=setTimeout(()=>{
+  try{localStorage.setItem(SK,JSON.stringify(D));ss.textContent='сохранено'}catch(e){ss.textContent='ошибка'}
+  setTimeout(()=>ss.textContent='',1200)
+},400)}
+
+function AB(){return D.active.type==='board'?D.boards.find(b=>b.id===D.active.id):null}
+function AN(){return D.active.type==='note'?D.notes.find(n=>n.id===D.active.id):null}
+function AF(){return D.active.type==='folder'?D.folders.find(f=>f.id===D.active.id):null}
+function V(){const b=AB();return b?b.vp:{x:0,y:0,z:1}}
+function s2b(sx,sy){const r=cv.getBoundingClientRect(),v=V();return{x:(sx-r.left-v.x)/v.z,y:(sy-r.top-v.y)/v.z}}
+
+// ─── Geometry ───
+// Returns exit point + outward normal direction from node edge
+function epDir(n,tx,ty){
+  const w=n.w||180,h=n.h||80,cx=n.x+w/2,cy=n.y+h/2
+  const dx=tx-cx,dy=ty-cy
+  if(!dx&&!dy)return{x:cx,y:cy-h/2,nx:0,ny:-1}
+  const hw=w/2,hh=h/2
+  if(Math.abs(dx)*hh>Math.abs(dy)*hw){
+    // exits left or right
+    const s=hw/Math.abs(dx)
+    return{x:cx+dx*s,y:cy+dy*s,nx:dx>0?1:-1,ny:0}
+  }else{
+    // exits top or bottom
+    const s=hh/Math.abs(dy)
+    return{x:cx+dx*s,y:cy+dy*s,nx:0,ny:dy>0?1:-1}
+  }
+}
+function se(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e}
+
+// ─── Active switching ───
+function activate(type,id){
+  // Save note content before switching
+  if(D.active.type==='note'){const n=AN();if(n)n.content=nb.innerHTML}
+  D.active={type,id};sel=null;edt=null;cf=null;save();R()
+}
+
+// ─── Board ops ───
+function addBoard(fid){const id=gid();D.boards.push({id,name:'доска '+(D.boards.length+1),fid:fid||null,nodes:[],conns:[],vp:{x:0,y:0,z:1},nid:1});activate('board',id)}
+function delBoard(id){if(D.boards.length===0)return;D.boards=D.boards.filter(b=>b.id!==id);if(D.active.type==='board'&&D.active.id===id){if(D.boards.length)activate('board',D.boards[0].id);else if(D.notes.length)activate('note',D.notes[0].id);else addBoard(null)}else R();save()}
+function renItem(type,id,nm){
+  const list=type==='board'?D.boards:D.notes;const it=list.find(x=>x.id===id);if(it)it.name=nm.trim()||it.name;save();R()
+}
+
+// ─── Note ops ───
+function addNote(fid){const id=gid();D.notes.push({id,name:'заметка '+(D.notes.length+1),fid:fid||null,content:''});activate('note',id)}
+function delNote(id){D.notes=D.notes.filter(n=>n.id!==id);if(D.active.type==='note'&&D.active.id===id){if(D.boards.length)activate('board',D.boards[0].id);else if(D.notes.length)activate('note',D.notes[0].id);else addBoard(null)}else R();save()}
+
+// ─── Folder ops ───
+function addFolder(){D.folders.push({id:gid(),name:'новая папка'});save();R()}
+function delFolder(id){
+  // Move items out of folder
+  D.boards.forEach(b=>{if(b.fid===id)b.fid=null})
+  D.notes.forEach(n=>{if(n.fid===id)n.fid=null})
+  D.folders=D.folders.filter(f=>f.id!==id);save();R()
+}
+function renFolder(id,nm){const f=D.folders.find(f=>f.id===id);if(f)f.name=nm.trim()||f.name;save();R()}
+function moveToFolder(type,itemId,folderId){
+  const list=type==='board'?D.boards:D.notes;const it=list.find(x=>x.id===itemId);if(it)it.fid=folderId;save();R()
+}
+
+// ─── Left Panel render ───
+let collapsed={}
+function renderLP(){
+  let h=''
+  // Logo
+  h+=`<div class="lp-logo">ка-би-нéт</div>`
+  // Tools
+  h+=`<div class="sec${collapsed.tools?' collapsed':''}" data-sec="tools"><div class="slbl" data-toggle="tools">инструменты</div><div class="sec-body"><div id="tools">`
+  const tools=[
+    {t:'hand',l:'рука'},
+    {t:'text',l:'нода'},
+    {t:'checklist',l:'список'},
+    {t:'calendar',l:'календарь'},
+    {t:'calc',l:'калькулятор'},
+    {t:'table',l:'таблица'},
+    {t:'timer',l:'таймер'},
+    {t:'shape',l:'фигуры'},
+    {t:'lamp',l:'лампа'},
+    {t:'image',l:'фото'},
+    {t:'connect',l:'связь'},
+    {t:'grid',l:'грид'},
+    {t:'comment',l:'комментарий'},
+  ]
+  tools.forEach(t=>{
+    h+=`<button class="tbtn${tool===t.t?' active':''}" data-tool="${t.t}"><span class="tl">${t.l}</span></button>`
+  })
+  h+=`</div>
+    <div style="border-top:1px solid #000;display:flex">
+      <button class="tbtn" id="btnUndo" style="flex:1;justify-content:center;opacity:.3" title="отменить (Ctrl+Z)"><span class="tl">↩ отмена</span></button>
+      <button class="tbtn" id="btnRedo" style="flex:1;justify-content:center;border-left:1px solid #000;opacity:.3" title="повторить (Ctrl+Y)"><span class="tl">↪ повтор</span></button>
+    </div></div></div>`
+
+  // Boards
+  const freeBoards=D.boards.filter(b=>!b.fid)
+  h+=`<div class="sec${collapsed.boards?' collapsed':''}" data-sec="boards"><div class="slbl" data-toggle="boards">доски</div><div class="sec-body">`
+  freeBoards.forEach(b=>{h+=renderListItem('board',b)})
+  h+=`<button class="addbtn" data-add="board">+</button></div></div>`
+
+  // Notes
+  const freeNotes=D.notes.filter(n=>!n.fid)
+  h+=`<div class="sec${collapsed.notes?' collapsed':''}" data-sec="notes"><div class="slbl" data-toggle="notes">заметки</div><div class="sec-body">`
+  freeNotes.forEach(n=>{h+=renderListItem('note',n)})
+  h+=`<button class="addbtn" data-add="note">+</button></div></div>`
+
+  // Folders
+  h+=`<div class="sec${collapsed.folders?' collapsed':''}" data-sec="folders"><div class="slbl" data-toggle="folders">папки</div><div class="sec-body"><div id="folders">`
+  D.folders.forEach(f=>{
+    const fBoards=D.boards.filter(b=>b.fid===f.id)
+    const fNotes=D.notes.filter(n=>n.fid===f.id)
+    h+=`<div class="folder" data-fid="${f.id}"><div class="folder-head${D.active.type==='folder'&&D.active.id===f.id?' active':''}" data-fid="${f.id}"><span class="folder-name">${esc(f.name)}</span><button class="folder-del" data-delf="${f.id}">✕</button></div><div class="folder-items">`
+    fBoards.forEach(b=>{h+=renderListItem('board',b)})
+    fNotes.forEach(n=>{h+=renderListItem('note',n)})
+    h+=`</div></div>`
+  })
+  h+=`</div><button class="addbtn" data-add="folder">+</button></div></div>`
+  h+=`<div style="border-bottom:1px solid #000"></div>`
+
+  // Spacer
+  h+=`<div style="flex:1"></div>`
+
+  // Instruction, Account & Info
+  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-save" id="lpSave">сохранить</div></div>`
+  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="export">поделиться</div></div>`
+  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="guide">инструкция</div></div>`
+  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="account">мой аккаунт</div></div>`
+  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="info">информация</div></div>`
+
+  // Zoom
+  h+=`<div class="zoom-sec"><button class="zbtn" id="zi"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="#8E8E93" stroke-width="1.3" stroke-linecap="round"/></svg></button><button class="zpct" id="zl">${Math.round(V().z*100)}%</button><button class="zbtn" id="zo"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="#8E8E93" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>`
+  h+=`<a class="lp-copy" href="https://ninarkremer.com" target="_blank">© 2026 NINA KREMER</a>`
+
+  lp.innerHTML=h
+  bindLP()
+}
+
+function renderListItem(type,item){
+  const isActive=D.active.type===type&&D.active.id===item.id
+  return`<div class="litm${isActive?' active':''}" data-type="${type}" data-id="${item.id}" draggable="true"><span class="litm-name">${esc(item.name)}</span><button class="litm-del" data-del="${type}:${item.id}">✕</button></div>`
+}
+
+function bindLP(){
+  // Collapse toggles
+  lp.querySelectorAll('.slbl[data-toggle]').forEach(el=>el.addEventListener('click',()=>{
+    const key=el.dataset.toggle;collapsed[key]=!collapsed[key];R()
+  }))
+  // Tools
+  lp.querySelectorAll('.tbtn').forEach(b=>{
+    if(b.id==='btnUndo'){b.addEventListener('click',undo);return}
+    if(b.id==='btnRedo'){b.addEventListener('click',redo);return}
+    b.addEventListener('click',()=>setTool(b.dataset.tool))
+  })
+  // List items
+  lp.querySelectorAll('.litm').forEach(el=>{
+    el.addEventListener('click',e=>{if(e.target.closest('.litm-del'))return;activate(el.dataset.type,el.dataset.id)})
+    el.addEventListener('dblclick',e=>{
+      if(e.target.closest('.litm-del'))return
+      const span=el.querySelector('.litm-name')
+      const oldName=span.textContent
+      const inp=document.createElement('input');inp.className='top-input';inp.value=oldName;inp.style.width='75px';inp.style.fontSize='9px'
+      span.replaceWith(inp);inp.focus();inp.select()
+      const done=()=>{renItem(el.dataset.type,el.dataset.id,inp.value);R()}
+      inp.addEventListener('blur',done)
+      inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')done();if(ev.key==='Escape')R()})
+    })
+    // Drag
+    el.addEventListener('dragstart',e=>{dragItem={type:el.dataset.type,id:el.dataset.id};el.classList.add('dragging');e.dataTransfer.effectAllowed='move'})
+    el.addEventListener('dragend',()=>{el.classList.remove('dragging');dragItem=null;lp.querySelectorAll('.drop-over').forEach(x=>x.classList.remove('drop-over'))})
+  })
+  // Delete buttons
+  lp.querySelectorAll('.litm-del').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();const[type,id]=btn.dataset.del.split(':')
+    if(type==='board')delBoard(id);else delNote(id)
+  }))
+  // Folder heads (drop target + rename)
+  lp.querySelectorAll('.folder-head').forEach(fh=>{
+    fh.addEventListener('click',e=>{if(e.target.closest('.folder-del'))return;activate('folder',fh.dataset.fid)})
+    fh.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';fh.classList.add('drop-over')})
+    fh.addEventListener('dragleave',()=>fh.classList.remove('drop-over'))
+    fh.addEventListener('drop',e=>{e.preventDefault();fh.classList.remove('drop-over');if(dragItem)moveToFolder(dragItem.type,dragItem.id,fh.dataset.fid);dragItem=null})
+    fh.addEventListener('dblclick',e=>{
+      if(e.target.closest('.folder-del'))return
+      const span=fh.querySelector('.folder-name');const fid=fh.dataset.fid
+      const inp=document.createElement('input');inp.className='top-input';inp.value=span.textContent;inp.style.width='60px';inp.style.fontSize='9px'
+      span.replaceWith(inp);inp.focus();inp.select()
+      const done=()=>{renFolder(fid,inp.value);R()}
+      inp.addEventListener('blur',done)
+      inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')done();if(ev.key==='Escape')R()})
+    })
+  })
+  // Folder delete
+  lp.querySelectorAll('.folder-del').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();delFolder(btn.dataset.delf)}))
+  // Add buttons
+  lp.querySelectorAll('.addbtn').forEach(btn=>btn.addEventListener('click',()=>{
+    const a=btn.dataset.add;if(a==='board')addBoard(null);if(a==='note')addNote(null);if(a==='folder')addFolder()
+  }))
+  // Save button
+  $('lpSave')?.addEventListener('click',()=>{
+    if(D)localStorage.setItem(SK,JSON.stringify(D))
+    const s=document.getElementById('sstat')
+    if(s){s.textContent='сохранено';setTimeout(()=>s.textContent='',1200)}
+  })
+  // Zoom
+  $('zi')?.addEventListener('click',()=>{const z=V().z;zTo(ZS.find(s=>s>z)||ZS[ZS.length-1])})
+  $('zo')?.addEventListener('click',()=>{const z=V().z;zTo([...ZS].reverse().find(s=>s<z)||ZS[0])})
+  $('zl')?.addEventListener('click',()=>zTo(1))
+  // Account & Info links
+  lp.querySelectorAll('.lp-link').forEach(el=>el.addEventListener('click',()=>{
+    const link=el.dataset.link
+    if(link==='guide')showPanel('guide')
+    if(link==='account')showPanel('account')
+    if(link==='info')showPanel('info')
+    if(link==='export')showPanel('export')
+  }))
+}
+
+// ─── Panels ───
+const panelOverlay=$('panelOverlay')
+function showPanel(name){
+  const map={account:'panelAccount',info:'panelInfo',guide:'panelGuide',export:'panelExport'}
+  const id=map[name];if(!id)return
+  if(name==='account'){
+    const uname=sessionStorage.getItem('kabinet-username')||sessionStorage.getItem('kabinet-session')||''
+    const g=document.getElementById('accGreeting')
+    if(g)g.textContent=uname&&uname!=='demo'?'привет, '+uname+'!':'привет!'
+  }
+  $(id).classList.add('open')
+  panelOverlay.classList.add('open')
+}
+function closePanel(){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'))
+  panelOverlay.classList.remove('open')
+}
+panelOverlay.addEventListener('click',closePanel)
+document.querySelectorAll('.panel-close').forEach(btn=>btn.addEventListener('click',closePanel))
+
+// ─── Legal docs ───
+const DOCS={
+  privacy:{
+    title:'политика конфиденциальности',
+    html:`
+<h2>1. Общие положения</h2>
+<p>Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки и защиты персональных данных пользователей веб-приложения <strong>кабинет</strong> (далее — «Приложение»).</p>
+<p>Оператор персональных данных: <strong>Nina Kremer</strong>, самозанятая, Россия.</p>
+<p>Используя Приложение, вы соглашаетесь с условиями настоящей Политики.</p>
+
+<h2>2. Какие данные мы собираем</h2>
+<ul>
+<li><strong>Адрес электронной почты</strong> — при регистрации и авторизации</li>
+<li><strong>Данные об использовании</strong> — тип устройства, браузер, действия в Приложении</li>
+<li><strong>Пользовательский контент</strong> — доски, заметки, ноды, созданные вами в Приложении</li>
+</ul>
+<p>Данные банковских карт Приложение не хранит — платежи обрабатываются через <strong>ЮKassa</strong>.</p>
+
+<h2>3. Как мы используем данные</h2>
+<ul>
+<li>Предоставление и улучшение функциональности Приложения</li>
+<li>Авторизация и управление подпиской</li>
+<li>Направление уведомлений, связанных с Приложением</li>
+<li>Выполнение требований законодательства РФ</li>
+</ul>
+
+<h2>4. Хранение данных</h2>
+<p>Данные хранятся на серверах <strong>Yandex Cloud</strong>, расположенных на территории Российской Федерации, в соответствии с требованиями <strong>152-ФЗ</strong> «О персональных данных».</p>
+<p>Пользовательский контент также может храниться локально в вашем браузере (localStorage).</p>
+
+<h2>5. Передача данных третьим лицам</h2>
+<p>Мы не передаём ваши персональные данные третьим лицам, за исключением случаев, предусмотренных законодательством РФ, а также платёжному оператору ЮKassa в объёме, необходимом для проведения платежей.</p>
+
+<h2>6. Ваши права</h2>
+<ul>
+<li>Получить информацию об обрабатываемых данных</li>
+<li>Потребовать исправления или удаления данных</li>
+<li>Отозвать согласие на обработку данных</li>
+</ul>
+<p>Для реализации прав обращайтесь: <strong>hello@ninarkremer.com</strong></p>
+
+<h2>7. Изменения Политики</h2>
+<p>Мы вправе обновлять Политику. Актуальная версия всегда доступна в разделе «информация» Приложения.</p>
+<p>Дата последнего обновления: <strong>февраль 2026</strong></p>`
+  },
+  terms:{
+    title:'пользовательское соглашение',
+    html:`
+<h2>1. Предмет соглашения</h2>
+<p>Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует использование веб-приложения <strong>кабинет</strong> (далее — «Приложение»), предоставляемого <strong>Nina Kremer</strong>, самозанятая (далее — «Разработчик»).</p>
+<p>Используя Приложение, вы принимаете условия настоящего Соглашения.</p>
+
+<h2>2. Описание сервиса</h2>
+<p>кабинет — визуальный планер для организации идей, проектов и целей. Приложение предоставляет инструменты для создания интерактивных досок, заметок и связей между ними.</p>
+
+<h2>3. Регистрация и доступ</h2>
+<ul>
+<li>Для использования полного функционала необходима регистрация по email</li>
+<li>Пробный период составляет <strong>7 дней</strong> бесплатно</li>
+<li>После окончания пробного периода доступ предоставляется по подписке</li>
+<li>Вы несёте ответственность за сохранность своих учётных данных</li>
+</ul>
+
+<h2>4. Тарифы и оплата</h2>
+<ul>
+<li><strong>Месячная подписка:</strong> 299 ₽/мес</li>
+<li><strong>Годовая подписка:</strong> 2 500 ₽/год (экономия 17%)</li>
+</ul>
+<p>Оплата осуществляется через платёжный сервис <strong>ЮKassa</strong>. Подписка продлевается автоматически. Отменить автопродление можно в разделе «мой аккаунт».</p>
+<p>Возврат средств возможен в течение <strong>14 дней</strong> с момента оплаты при условии, что вы не использовали платные функции.</p>
+
+<h2>5. Права и ограничения</h2>
+<p>Вы вправе:</p>
+<ul>
+<li>Использовать Приложение в личных и коммерческих целях</li>
+<li>Экспортировать и делиться своими данными</li>
+</ul>
+<p>Вы не вправе:</p>
+<ul>
+<li>Копировать, продавать или распространять Приложение</li>
+<li>Использовать Приложение для противоправных целей</li>
+<li>Предпринимать попытки взлома или нарушения работы сервиса</li>
+</ul>
+
+<h2>6. Контент пользователя</h2>
+<p>Весь контент, созданный вами в Приложении, принадлежит вам. Разработчик не претендует на права на ваш контент и не использует его в коммерческих целях.</p>
+
+<h2>7. Ответственность</h2>
+<p>Приложение предоставляется «как есть». Разработчик не несёт ответственности за потерю данных вследствие технических сбоев. Рекомендуется регулярно создавать резервные копии данных.</p>
+
+<h2>8. Контакты</h2>
+<p>По всем вопросам: <strong>hello@ninarkremer.com</strong></p>
+<p>Дата вступления в силу: <strong>февраль 2026</strong></p>`
+  },
+  consent:{
+    title:'согласие на обработку данных',
+    html:`
+<h2>Согласие на обработку персональных данных</h2>
+<p>В соответствии с требованиями Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных», регистрируясь и используя приложение <strong>кабинет</strong>, я даю своё согласие <strong>Nina Kremer</strong> (самозанятая, Россия) на обработку следующих персональных данных:</p>
+
+<h2>Перечень персональных данных</h2>
+<ul>
+<li>Адрес электронной почты</li>
+<li>Данные об использовании Приложения (тип устройства, браузер, действия в сервисе)</li>
+<li>Пользовательский контент, созданный в Приложении</li>
+</ul>
+
+<h2>Цели обработки</h2>
+<ul>
+<li>Идентификация и авторизация пользователя</li>
+<li>Предоставление доступа к функциям Приложения</li>
+<li>Исполнение договора об оказании услуг (подписки)</li>
+<li>Улучшение качества Приложения</li>
+<li>Направление уведомлений, связанных с работой сервиса</li>
+</ul>
+
+<h2>Условия обработки</h2>
+<p><strong>Способы обработки:</strong> сбор, запись, хранение, уточнение, использование, удаление.</p>
+<p><strong>Хранение:</strong> серверы Yandex Cloud на территории РФ, а также локальное хранилище браузера (localStorage).</p>
+<p><strong>Срок хранения:</strong> в течение действия учётной записи и 3 лет после её удаления, если иное не предусмотрено законодательством.</p>
+<p><strong>Передача третьим лицам:</strong> данные передаются платёжному оператору ЮKassa в объёме, необходимом для обработки платежей.</p>
+
+<h2>Права субъекта персональных данных</h2>
+<p>Вы вправе в любое время:</p>
+<ul>
+<li>Получить информацию об обработке ваших данных</li>
+<li>Потребовать уточнения, блокирования или уничтожения данных</li>
+<li>Отозвать настоящее согласие</li>
+</ul>
+<p>Для отзыва согласия направьте запрос на <strong>hello@ninarkremer.com</strong>. Отзыв согласия не влияет на законность обработки, осуществлённой до его получения.</p>
+<p>Согласие считается принятым с момента начала использования Приложения.</p>`
+  }
+}
+
+document.getElementById('docPrivacy')?.addEventListener('click',()=>openDoc('privacy'))
+document.getElementById('docTerms')?.addEventListener('click',()=>openDoc('terms'))
+document.getElementById('docConsent')?.addEventListener('click',()=>openDoc('consent'))
+document.getElementById('docClose')?.addEventListener('click',()=>{
+  document.getElementById('panelDoc').classList.remove('open')
+  document.getElementById('panelDoc').style.display='none'
+})
+
+function openDoc(key){
+  const doc=DOCS[key];if(!doc)return
+  document.getElementById('docTitle').textContent=doc.title
+  document.getElementById('docBody').innerHTML=doc.html
+  // close info panel first
+  document.getElementById('panelInfo').classList.remove('open')
+  const pd=document.getElementById('panelDoc')
+  pd.style.display='block'
+  pd.classList.add('open')
+  panelOverlay.classList.add('open')
+}
+// ─── Export ───
+// ─── Share link ───
+function showToast(msg){
+  const t=document.getElementById('toast');if(!t)return
+  t.textContent=msg;t.classList.add('show')
+  setTimeout(()=>t.classList.remove('show'),2200)
+}
+document.getElementById('shareBtn')?.addEventListener('click',()=>{
+  const b=AB();if(!b){showToast('нет активной доски');return}
+  try{
+    const boardData=JSON.stringify(b)
+    const compressed=LZString.compressToEncodedURIComponent(boardData)
+    const url=location.href.split('#')[0]+'#s='+compressed
+    navigator.clipboard.writeText(url).then(()=>{
+      showToast('ссылка скопирована')
+      closePanel()
+    }).catch(()=>{
+      // fallback
+      const inp=document.createElement('input')
+      inp.value=url;document.body.appendChild(inp)
+      inp.select();document.execCommand('copy')
+      inp.remove()
+      showToast('ссылка скопирована')
+      closePanel()
+    })
+  }catch(e){showToast('ошибка — доска слишком большая')}
+})
+
+// ─── Cookie consent ───
+;(()=>{
+  const CK='kabinet-cookie-consent'
+  const banner=document.getElementById('cookieBanner')
+  if(!banner)return
+  // show if not yet decided
+  if(!localStorage.getItem(CK)){
+    setTimeout(()=>banner.classList.remove('hidden'),1200)
+  }
+  document.getElementById('cookieAccept')?.addEventListener('click',()=>{
+    localStorage.setItem(CK,'all')
+    banner.classList.add('hidden')
+  })
+  document.getElementById('cookieDecline')?.addEventListener('click',()=>{
+    localStorage.setItem(CK,'essential')
+    banner.classList.add('hidden')
+  })
+  document.getElementById('cookiePrivacyLink')?.addEventListener('click',()=>{
+    banner.classList.add('hidden')
+    openDoc('privacy')
+  })
+})()
+
+// Price toggle
+document.querySelectorAll('.panel-price').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('.panel-price').forEach(x=>x.classList.remove('active'))
+  p.classList.add('active')
+}))
+
+// ─── Tools ───
+function setTool(t){tool=t===tool&&t!=='hand'?'hand':t;R()}
+
+// ─── Top bar ───
+function renderTop(){
+  const b=AB(),n=AN(),f=AF()
+  pn.textContent=D.pname
+  bn.textContent=b?b.name:n?n.name:f?f.name:''
+  pn.ondblclick=()=>editField(pn,D.pname,v=>{D.pname=v;save();renderTop()})
+  bn.ondblclick=()=>{
+    if(f){editField(bn,f.name,v=>{renFolder(f.id,v)});return}
+    const item=b||n;if(!item)return
+    editField(bn,item.name,v=>{renItem(D.active.type,item.id,v)})
+  }
+}
+function editField(el,val,cb){
+  const inp=document.createElement('input');inp.className='top-input';inp.value=val
+  el.replaceWith(inp);inp.focus();inp.select()
+  let done_called=false
+  const done=()=>{
+    if(done_called)return;done_called=true
+    cb(inp.value.trim()||val)
+    if(inp.parentNode)inp.replaceWith(el)
+    renderTop()
+  }
+  inp.addEventListener('blur',done)
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();done()}
+    if(e.key==='Escape'){done_called=true;if(inp.parentNode)inp.replaceWith(el);renderTop()}
+  })
+}
+
+// ─── Note editor ───
+function renderNoteEditor(){
+  const n=AN()
+  if(n){ne.classList.add('show');cv.classList.remove('show');nb.innerHTML=n.content||'';rebindNoteImgs()}
+  else{ne.classList.remove('show')}
+}
+nb.addEventListener('input',()=>{const n=AN();if(n){n.content=nb.innerHTML;save()}})
+
+// ─── Floating toolbar ───
+const ftb=$('ftb'),ftbDrag=$('ftbDrag'),ftbDD=$('ftbDD')
+let ftbDg=null
+
+// Position toolbar initially
+function initFtbPos(){
+  const r=ne.getBoundingClientRect()
+  ftb.style.right='24px';ftb.style.bottom='24px';ftb.style.left='auto';ftb.style.top='auto'
+}
+initFtbPos()
+
+// Drag
+ftbDrag.addEventListener('mousedown',e=>{
+  e.preventDefault()
+  const r=ftb.getBoundingClientRect(),pr=ne.getBoundingClientRect()
+  ftbDg={ox:e.clientX-r.left+pr.left,oy:e.clientY-r.top+pr.top}
+  ftb.style.right='auto';ftb.style.bottom='auto'
+})
+window.addEventListener('mousemove',e=>{
+  if(!ftbDg)return
+  const pr=ne.getBoundingClientRect()
+  let x=e.clientX-ftbDg.ox,y=e.clientY-ftbDg.oy
+  x=Math.max(0,Math.min(pr.width-ftb.offsetWidth,x))
+  y=Math.max(0,Math.min(pr.height-ftb.offsetHeight,y))
+  ftb.style.left=x+'px';ftb.style.top=y+'px'
+})
+window.addEventListener('mouseup',()=>{ftbDg=null})
+
+// Format buttons
+ftb.querySelectorAll('.ftb-btn[data-cmd]').forEach(btn=>{
+  btn.addEventListener('mousedown',e=>e.preventDefault())
+  btn.addEventListener('click',()=>{
+    nb.focus()
+    document.execCommand(btn.dataset.cmd,false,null)
+    updateFtbState()
+    const n=AN();if(n){n.content=nb.innerHTML;save()}
+  })
+})
+
+// Color picker
+$('ftbClrIn').addEventListener('input',e=>{
+  nb.focus()
+  document.execCommand('foreColor',false,e.target.value)
+  $('ftbClr').style.background=e.target.value
+  const n=AN();if(n){n.content=nb.innerHTML;save()}
+})
+$('ftbClrIn').addEventListener('mousedown',e=>e.stopPropagation())
+
+// Photo button
+$('ftbPhoto').addEventListener('mousedown',e=>e.preventDefault())
+$('ftbPhoto').addEventListener('click',()=>{imgCb=(src)=>{nb.focus();insertNoteImg(src)};fup.click()})
+
+// Style dropdown
+$('ftbStyle').addEventListener('mousedown',e=>e.preventDefault())
+$('ftbStyle').addEventListener('click',()=>{ftbDD.classList.toggle('open')})
+document.addEventListener('mousedown',e=>{if(!e.target.closest('.ftb-dd')&&!e.target.closest('#ftbStyle'))ftbDD.classList.remove('open')})
+
+ftbDD.querySelectorAll('.ftb-ddi').forEach(item=>{
+  item.addEventListener('mousedown',e=>e.preventDefault())
+  item.addEventListener('click',()=>{
+    nb.focus()
+    const s=item.dataset.style
+    if(s==='h1')document.execCommand('formatBlock',false,'h1')
+    else if(s==='h2')document.execCommand('formatBlock',false,'h2')
+    else if(s==='h3')document.execCommand('formatBlock',false,'h3')
+    else if(s==='p')document.execCommand('formatBlock',false,'p')
+    else if(s==='pre')document.execCommand('formatBlock',false,'pre')
+    else if(s==='blockquote')document.execCommand('formatBlock',false,'blockquote')
+    else if(s==='ul'){document.execCommand('insertUnorderedList',false,null)}
+    else if(s==='ul-dash'){document.execCommand('insertUnorderedList',false,null);/* style via CSS */}
+    else if(s==='ol'){document.execCommand('insertOrderedList',false,null)}
+    ftbDD.classList.remove('open')
+    updateFtbState()
+    const n=AN();if(n){n.content=nb.innerHTML;save()}
+  })
+})
+
+// Update active state of buttons
+function updateFtbState(){
+  ftb.querySelectorAll('.ftb-btn[data-cmd]').forEach(btn=>{
+    btn.classList.toggle('on',document.queryCommandState(btn.dataset.cmd))
+  })
+  // Update style dropdown active
+  const block=document.queryCommandValue('formatBlock').toLowerCase().replace(/[<>]/g,'')
+  ftbDD.querySelectorAll('.ftb-ddi').forEach(d=>{
+    const s=d.dataset.style
+    const isActive=(s==='h1'&&block==='h1')||(s==='h2'&&block==='h2')||(s==='h3'&&block==='h3')||(s==='pre'&&block==='pre')||(s==='blockquote'&&block==='blockquote')||(s==='p'&&(!block||block==='p'||block==='div'))
+    d.classList.toggle('active',isActive)
+  })
+}
+nb.addEventListener('keyup',updateFtbState)
+nb.addEventListener('mouseup',()=>setTimeout(updateFtbState,10))
+
+// ─── Note drag & drop ───
+nb.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();nb.classList.add('dragover')})
+nb.addEventListener('dragleave',e=>{e.preventDefault();nb.classList.remove('dragover')})
+nb.addEventListener('drop',e=>{
+  e.preventDefault();e.stopPropagation();nb.classList.remove('dragover')
+  const files=e.dataTransfer.files;if(!files.length)return
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return
+    const r=new FileReader();r.onload=ev=>{insertNoteImg(ev.target.result)};r.readAsDataURL(f)
+  })
+})
+// Also handle paste
+nb.addEventListener('paste',e=>{
+  const items=e.clipboardData?.items;if(!items)return
+  for(const it of items){
+    if(it.type.startsWith('image/')){
+      e.preventDefault();const f=it.getAsFile();if(!f)return
+      const r=new FileReader();r.onload=ev=>{insertNoteImg(ev.target.result)};r.readAsDataURL(f);return
+    }
+  }
+})
+
+function insertNoteImg(src){
+  const wrap=document.createElement('div');wrap.className='nb-img-wrap';wrap.contentEditable='false'
+  const img=document.createElement('img');img.src=src;img.style.width='100%'
+  const rh=document.createElement('div');rh.className='nb-rh'
+  wrap.appendChild(img);wrap.appendChild(rh)
+  // Insert at cursor or append
+  const sel2=window.getSelection()
+  if(sel2.rangeCount&&nb.contains(sel2.anchorNode)){
+    const range=sel2.getRangeAt(0);range.collapse(false);range.insertNode(wrap)
+    // Add line break after for continued typing
+    const br=document.createElement('br');wrap.after(br)
+    range.setStartAfter(br);range.collapse(true);sel2.removeAllRanges();sel2.addRange(range)
+  }else{nb.appendChild(wrap);nb.appendChild(document.createElement('br'))}
+  setupImgWrap(wrap)
+  const n=AN();if(n){n.content=nb.innerHTML;save()}
+}
+
+// ─── Note image resize ───
+let nbRsz=null
+function setupImgWrap(wrap){
+  const img=wrap.querySelector('img'),rh=wrap.querySelector('.nb-rh')
+  wrap.addEventListener('mousedown',e=>{
+    e.stopPropagation()
+    // Deselect all others
+    nb.querySelectorAll('.nb-img-wrap.selected').forEach(w=>w.classList.remove('selected'))
+    wrap.classList.add('selected')
+  })
+  rh.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation()
+    nbRsz={img,startX:e.clientX,startW:img.offsetWidth}
+    img.classList.add('nb-resizing')
+  })
+}
+window.addEventListener('mousemove',e=>{
+  if(!nbRsz)return
+  const newW=Math.max(60,nbRsz.startW+(e.clientX-nbRsz.startX))
+  nbRsz.img.style.width=newW+'px'
+})
+window.addEventListener('mouseup',()=>{
+  if(nbRsz){nbRsz.img.classList.remove('nb-resizing');nbRsz=null;const n=AN();if(n){n.content=nb.innerHTML;save()}}
+})
+// Click outside deselects
+nb.addEventListener('mousedown',e=>{
+  if(!e.target.closest('.nb-img-wrap'))nb.querySelectorAll('.nb-img-wrap.selected').forEach(w=>w.classList.remove('selected'))
+})
+
+// Re-attach handlers after loading note content
+function rebindNoteImgs(){nb.querySelectorAll('.nb-img-wrap').forEach(w=>{if(!w.querySelector('.nb-rh')){const rh=document.createElement('div');rh.className='nb-rh';w.appendChild(rh)};w.contentEditable='false';setupImgWrap(w)})}
+
+// Delete selected image with keyboard
+nb.addEventListener('keydown',e=>{
+  if(e.key==='Delete'||e.key==='Backspace'){
+    const selWrap=nb.querySelector('.nb-img-wrap.selected')
+    if(selWrap){e.preventDefault();selWrap.remove();const n=AN();if(n){n.content=nb.innerHTML;save()}}
+  }
+})
+
+
+// ─── Canvas view ───
+function showCanvas(){
+  if(AB()||AF()){cv.classList.add('show');ne.classList.remove('show')}
+  else{cv.classList.remove('show')}
+}
+
+// ─── Zoom ───
+function zTo(nz){const r=cv.getBoundingClientRect(),v=V(),cx=r.width/2,cy=r.height/2,s=nz/v.z;v.x=cx-s*(cx-v.x);v.y=cy-s*(cy-v.y);v.z=nz;rc()}
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();if(!AB())return;const r=cv.getBoundingClientRect(),v=V(),px=e.clientX-r.left,py=e.clientY-r.top
+  const d=e.ctrlKey?-e.deltaY*.01:-e.deltaY*.002,nz=Math.max(.15,Math.min(4,v.z*(1+d))),s=nz/v.z
+  v.x=px-s*(px-v.x);v.y=py-s*(py-v.y);v.z=nz;rc()
+},{passive:false})
+
+// ─── Node ops ───
+function addNode(type,bx,by,extra){
+  const b=AB();if(!b)return;const id=b.nid++
+  let nd={id,type,x:bx,y:by,w:180,h:80,c:{}}
+  if(type==='text')nd.c={text:''}
+  if(type==='checklist'){nd.c={items:[{text:'',done:false}]};nd.h=90}
+  if(type==='calendar'){const now=new Date();nd.c={year:now.getFullYear(),month:now.getMonth(),marked:[]};nd.w=200;nd.h=200}
+  if(type==='calc'){nd.c={display:'0',expr:'',fresh:true};nd.w=180;nd.h=220}
+  if(type==='table'){nd.c={rows:[['','',''],['','',''],['','','']]};nd.w=240;nd.h=120}
+  if(type==='timer'){nd.c={mode:'timer',h:0,m:5,s:0,left:300,running:false,done:false,startedAt:null,magnetTo:null,deadline:null};nd.w=140;nd.h=120}
+  if(type==='shape'){nd.c={form:null,text:''};nd.w=100;nd.h=100}
+  if(type==='lamp'){nd.c={label:''};nd.w=120;nd.h=120}
+  if(type==='image'){nd.c={src:extra||''};nd.w=200;nd.h=160}
+  if(type==='grid'){nd.c={format:null,src:''};nd.w=180;nd.h=140}
+  if(type==='comment'){nd.c={from:'',text:'',open:false,magnetTo:null};nd.w=160;nd.h=34}
+  b.nodes.push(nd);sel=id;save();rc()
+  if(type==='text')startEdit(id)
+}
+function delNode(id){const b=AB();if(!b)return;b.nodes.forEach(n=>{if((n.type==='timer'||n.type==='comment')&&n.c.magnetTo===id)n.c.magnetTo=null});b.nodes=b.nodes.filter(n=>n.id!==id);b.conns=b.conns.filter(c=>c.from!==id&&c.to!==id);if(sel===id)sel=null;if(edt===id)edt=null;save();rc()}
+function addConn(a,b2){if(a===b2)return;const b=AB();if(!b)return;if(b.conns.some(c=>(c.from===a&&c.to===b2)||(c.from===b2&&c.to===a)))return;b.conns.push({id:gid(),from:a,to:b2,label:''});save()}
+function startEdit(id){edt=id;sel=id;rc();setTimeout(()=>{const el=cv.querySelector(`.nd[data-id="${id}"]`);if(el){const ed=el.querySelector('.nd-edit');if(ed){ed.focus();const sel2=window.getSelection();sel2.selectAllChildren(ed);sel2.collapseToEnd()}}},20)}
+function finEdit(id){edt=null;save();rc()}
+
+// Canvas events
+cv.addEventListener('mousedown',e=>{
+  if(!AB())return
+  if(e.target.closest('.nd')||e.target.closest('.na'))return
+  if(tool!=='hand'&&tool!=='connect'){
+    const p=s2b(e.clientX,e.clientY)
+    if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click()}
+    else addNode(tool,p.x-90,p.y-40)
+    setTool('hand');return
+  }
+  if(tool==='hand'){
+    const now=Date.now(),dx=e.clientX-lcx,dy=e.clientY-lcy
+    if(now-lct<400&&Math.sqrt(dx*dx+dy*dy)<10){lct=0;const p=s2b(e.clientX,e.clientY);addNode('text',p.x-90,p.y-40);return}
+    lct=now;lcx=e.clientX;lcy=e.clientY
+  }
+  const v=V();pan={sx:e.clientX,sy:e.clientY,vx:v.x,vy:v.y};cv.classList.add('panning')
+  sel=null;cf=null;rc()
+})
+
+function ndDown(e,id){
+  e.stopPropagation()
+  if(shareMode)return
+  if(tool==='connect'){if(!cf){cf=id}else{addConn(cf,id);cf=null};rc();return}
+  if(cf){addConn(cf,id);cf=null;rc();return}
+  // finish edit if clicking different node
+  if(edt!==null&&edt!==id){edt=null;rc()}
+  if(edt===id)return
+  sel=id
+  const n=AB()?.nodes.find(n=>n.id===id);if(!n)return
+  drag={id,sx:e.clientX,sy:e.clientY,nx:n.x,ny:n.y}
+  cv.classList.add('dragging-node')
+  // just highlight selection, no full rc
+  cv.querySelectorAll('.nd').forEach(el=>{
+    el.classList.toggle('sel',+el.dataset.id===id)
+    el.classList.toggle('dragging',+el.dataset.id===id)
+  })
+}
+
+window.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY
+  if(drag){
+    const v=V(),z=v.z,b=AB(),n=b?.nodes.find(n=>n.id===drag.id);if(!n)return
+    const ox=n.x,oy=n.y
+    n.x=drag.nx+(e.clientX-drag.sx)/z
+    n.y=drag.ny+(e.clientY-drag.sy)/z
+    const ddx=n.x-ox,ddy=n.y-oy
+    // move dragged node directly
+    const el=cv.querySelector(`.nd[data-id="${n.id}"]`)
+    if(el){el.style.left=(n.x*z+v.x)+'px';el.style.top=(n.y*z+v.y)+'px'}
+    // move magneted timers
+    b.nodes.forEach(t=>{if((t.type==='timer'||t.type==='comment')&&t.c.magnetTo===n.id){
+      t.x+=ddx;t.y+=ddy
+      const te=cv.querySelector(`.nd[data-id="${t.id}"]`)
+      if(te){te.style.left=(t.x*z+v.x)+'px';te.style.top=(t.y*z+v.y)+'px'}
+    }})
+    renderSVG(b,z,v.x,v.y)
+    return
+  }
+  if(rsz){
+    const z=V().z,n=AB()?.nodes.find(n=>n.id===rsz.id);if(!n)return
+    n.w=Math.max(80,rsz.sw+(e.clientX-rsz.sx)/z)
+    n.h=Math.max(50,rsz.sh+(e.clientY-rsz.sy)/z)
+    // lock aspect ratio for grid
+    if(n.type==='grid'&&n.c.format){
+      const ratio=n.c.format==='reels'?16/9:1
+      n.h=n.w*ratio
+    }
+    rc();return
+  }
+  if(pan&&AB()){
+    const v=V()
+    v.x=pan.vx+(e.clientX-pan.sx)
+    v.y=pan.vy+(e.clientY-pan.sy)
+    const b=AB()
+    grd.style.backgroundPosition=`${v.x}px ${v.y}px`
+    b.nodes.forEach(n=>{
+      const el=cv.querySelector(`.nd[data-id="${n.id}"]`)
+      if(el){el.style.left=(n.x*v.z+v.x)+'px';el.style.top=(n.y*v.z+v.y)+'px'}
+    })
+    renderSVG(b,v.z,v.x,v.y)
+    return
+  }
+  if(cf)rc()
+})
+window.addEventListener('mouseup',e=>{
+  if(drag){save();drag=null;cv.classList.remove('dragging-node');cv.querySelectorAll('.nd.dragging').forEach(el=>el.classList.remove('dragging'))}
+  if(rsz){save();rsz=null}
+  if(pan){pan=null;cv.classList.remove('panning')}
+})
+
+fup.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f||!imgCb)return;const r=new FileReader();r.onload=ev=>{imgCb(ev.target.result);imgCb=null};r.readAsDataURL(f);fup.value=''})
+
+// Keyboard
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.contentEditable==='true')return
+  if(e.key==='Escape'){cf=null;sel=null;setTool('hand');rc()}
+  if((e.key==='Delete'||e.key==='Backspace')&&sel)delNode(sel)
+  if(e.key==='d'&&(e.metaKey||e.ctrlKey)&&sel){
+    e.preventDefault();const b=AB();if(!b)return;const o=b.nodes.find(n=>n.id===sel);if(o){const id=b.nid++;b.nodes.push({...JSON.parse(JSON.stringify(o)),id,x:o.x+20,y:o.y+20});sel=id;save();rc()}
+  }
+})
+
+// ─── Render ───
+function R(){renderLP();renderTop();showCanvas();renderNoteEditor();rc()}
+
+function rc(){
+  // Folder view
+  const f=AF()
+  if(f){renderFolderView(f);return}
+
+  const b=AB();if(!b)return
+  const v=b.vp,z=v.z
+  grd.style.backgroundSize=`${32*z}px ${32*z}px`;grd.style.backgroundPosition=`${v.x}px ${v.y}px`
+  const zle=$('zl');if(zle)zle.textContent=Math.round(z*100)+'%'
+  emp.style.display=b.nodes.length?'none':''
+  cv.classList.toggle('tool-active',tool!=='hand'&&tool!=='connect')
+  cv.querySelectorAll('.nd').forEach(el=>{if(!b.nodes.find(n=>n.id===+el.dataset.id))el.remove()})
+  cv.querySelectorAll('.fv-card').forEach(el=>el.remove())
+  cv.querySelectorAll('.fv-empty').forEach(el=>el.remove())
+  b.nodes.forEach(n=>{let el=cv.querySelector(`.nd[data-id="${n.id}"]`);if(!el)el=mkNd(n);upNd(el,n,z,v.x,v.y)})
+  renderSVG(b,z,v.x,v.y)
+}
+
+function renderFolderView(f){
+  cv.querySelectorAll('.nd').forEach(el=>el.remove())
+  sl.innerHTML=''
+  emp.style.display='none'
+  cv.classList.remove('tool-active')
+
+  const fBoards=D.boards.filter(b=>b.fid===f.id)
+  const fNotes=D.notes.filter(n=>n.fid===f.id)
+  const items=[...fBoards.map(b=>({type:'board',id:b.id,name:b.name,icon:'',meta:b.nodes.length+' нод'})),...fNotes.map(n=>({type:'note',id:n.id,name:n.name,icon:'',meta:'заметка'}))]
+
+  const zle=$('zl');if(zle)zle.textContent='100%'
+  grd.style.backgroundSize='32px 32px';grd.style.backgroundPosition='0px 0px'
+
+  cv.querySelectorAll('.fv-card').forEach(el=>el.remove())
+  cv.querySelectorAll('.fv-empty').forEach(el=>el.remove())
+
+  if(!items.length){
+    const empty=document.createElement('div');empty.className='fv-empty'
+    empty.innerHTML='<p style="font-size:15px;font-weight:500;color:#8E8E93">папка пуста</p><p style="font-size:13px;color:#AEAEB2;margin-top:6px">перетащи доски или заметки сюда</p>'
+    cv.appendChild(empty);return
+  }
+
+  const cols=Math.max(1,Math.min(4,Math.floor((cv.clientWidth-80)/210)))
+  const gapX=30,gapY=24,cardW=180,cardH=90
+  const totalW=cols*cardW+(cols-1)*gapX
+  const startX=(cv.clientWidth-totalW)/2
+  const startY=Math.max(40,60)
+
+  items.forEach((item,i)=>{
+    const col=i%cols,row=Math.floor(i/cols)
+    const x=startX+col*(cardW+gapX)
+    const y=startY+row*(cardH+gapY)
+
+    const card=document.createElement('div');card.className='fv-card'
+    card.style.left=x+'px';card.style.top=y+'px'
+    card.innerHTML=`<span class="fv-name">${esc(item.name)}</span><span class="fv-meta">${item.meta}</span>`
+    card.addEventListener('click',()=>activate(item.type,item.id))
+    card.addEventListener('mousedown',e=>e.stopPropagation())
+    cv.appendChild(card)
+  })
+}
+
+function mkNd(nd){
+  const el=document.createElement('div');el.className='nd';el.dataset.id=nd.id
+  el.innerHTML=`<div class="nd-inner"></div><div class="rh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1v8H1" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/><path d="M9 5v4H5" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/></svg></div>`
+  el.addEventListener('mousedown',e=>ndDown(e,nd.id))
+  el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
+  el.querySelector('.rh').addEventListener('mousedown',e=>{if(shareMode)return;e.stopPropagation();e.preventDefault();const n=AB()?.nodes.find(n=>n.id===nd.id);if(n)rsz={id:nd.id,sx:e.clientX,sy:e.clientY,sw:n.w||180,sh:n.h||80}})
+  cv.appendChild(el);return el
+}
+
+function upNd(el,nd,z,vx,vy){
+  el.style.left=(nd.x*z+vx)+'px';el.style.top=(nd.y*z+vy)+'px'
+  el.style.width=((nd.w||180)*z)+'px'
+  if(nd.type==='lamp'||nd.type==='shape'||nd.type==='grid'){el.style.height=((nd.h||100)*z)+'px';el.style.minHeight='0'}
+  else{el.style.height='auto';el.style.minHeight=((nd.h||80)*z)+'px'}
+  el.classList.toggle('sel',sel===nd.id);el.classList.toggle('conn-src',cf===nd.id)
+  if((nd.type==='shape'&&nd.c.form)||nd.type==='lamp'){el.style.background='none';el.style.border='none';el.style.boxShadow='none'}
+  else{el.style.background='';el.style.border='';el.style.boxShadow=''}
+  if(nd.type==='lamp'){el.style.borderRadius='50%';el.style.overflow='hidden'}
+  else{el.style.borderRadius='';el.style.overflow='visible'}
+  const inner=el.querySelector('.nd-inner')
+  if((nd.type==='shape'&&nd.c.form)||nd.type==='lamp'){inner.style.padding='0';inner.style.height='100%';inner.style.overflow='hidden';inner.style.borderRadius='50%'}
+  else if(nd.type==='grid'){inner.style.padding=nd.c.format?'0':`${8*z}px ${10*z}px`;inner.style.height='100%';inner.style.overflow='hidden';inner.style.borderRadius=''}
+  else{inner.style.padding=`${8*z}px ${10*z}px`;inner.style.height='auto';inner.style.overflow='';inner.style.borderRadius=''}
+  if(nd.type==='lamp'){inner.style.pointerEvents='none'}else{inner.style.pointerEvents=''}
+  if(nd.type==='text')rText(inner,nd,z)
+  else if(nd.type==='checklist')rCheck(inner,nd,z)
+  else if(nd.type==='calendar')rCal(inner,nd,z)
+  else if(nd.type==='image')rImg(inner,nd,z)
+  else if(nd.type==='calc')rCalc(inner,nd,z)
+  else if(nd.type==='table')rTable(inner,nd,z)
+  else if(nd.type==='timer')rTimer(inner,nd,z)
+  else if(nd.type==='shape')rShape(inner,nd,z)
+  else if(nd.type==='lamp')rLamp(inner,nd,z)
+  else if(nd.type==='grid')rGrid(inner,nd,z)
+  else if(nd.type==='comment')rComment(inner,nd,z)
+  let act=el.querySelector('.na')
+  if(sel===nd.id&&edt!==nd.id){
+    if(!act){act=document.createElement('div');act.className='na';act.innerHTML=`<button data-a="connect" title="Соединить"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><circle cx="3.5" cy="11.5" r="2" stroke="#636366" stroke-width="1.2"/><circle cx="11.5" cy="3.5" r="2" stroke="#636366" stroke-width="1.2"/><line x1="5" y1="10" x2="10" y2="5" stroke="#636366" stroke-width="1.2"/></svg></button><button data-a="delete" title="Удалить"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M4 4l7 7M11 4l-7 7" stroke="#FF3B30" stroke-width="1.3" stroke-linecap="round"/></svg></button>`;act.addEventListener('mousedown',e=>e.stopPropagation());act.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();if(btn.dataset.a==='connect'){cf=nd.id;rc()};if(btn.dataset.a==='delete')delNode(nd.id)}));el.appendChild(act)}
+  }else if(act)act.remove()
+}
+
+function addImgToNode(ed,src,nd){
+  const img=document.createElement('img');img.src=src
+  ed.appendChild(img)
+  // add empty line after image so text cursor appears below
+  const br=document.createElement('br');ed.appendChild(br)
+  nd.c.html=ed.innerHTML;save()
+  // place cursor after image
+  ed.focus()
+  const range=document.createRange();const sel=window.getSelection()
+  range.setStartAfter(br);range.collapse(true)
+  sel.removeAllRanges();sel.addRange(range)
+}
+
+function rText(inner,nd,z){
+  if(edt===nd.id){
+    if(!inner.querySelector('.nd-edit')){
+      inner.innerHTML=`<div class="nd-edit" contenteditable="true" style="font-size:${11*z}px">${nd.c.html||esc(nd.c.text||'')}</div><div class="nd-img-add">+ фото</div>`
+      const ed=inner.querySelector('.nd-edit')
+      ed.addEventListener('mousedown',e=>e.stopPropagation())
+      ed.addEventListener('input',()=>{nd.c.html=ed.innerHTML;nd.c.text=ed.textContent;save()})
+      ed.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){edt=null;rc()}})
+      ed.addEventListener('dragover',e=>{e.preventDefault();ed.classList.add('dragover')})
+      ed.addEventListener('dragleave',()=>ed.classList.remove('dragover'))
+      ed.addEventListener('drop',e=>{
+        e.preventDefault();ed.classList.remove('dragover')
+        const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'))
+        files.forEach(f=>{const r=new FileReader();r.onload=()=>addImgToNode(ed,r.result,nd);r.readAsDataURL(f)})
+      })
+      ed.addEventListener('paste',e=>{
+        const items=[...e.clipboardData.items]
+        const img=items.find(i=>i.type.startsWith('image/'))
+        if(img){e.preventDefault();const f=img.getAsFile();const r=new FileReader();r.onload=()=>addImgToNode(ed,r.result,nd);r.readAsDataURL(f)}
+      })
+      const addBtn=inner.querySelector('.nd-img-add')
+      addBtn.addEventListener('mousedown',e=>e.stopPropagation())
+      addBtn.addEventListener('click',e=>{
+        e.stopPropagation()
+        const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true
+        inp.addEventListener('change',()=>{
+          [...inp.files].forEach(f=>{const r=new FileReader();r.onload=()=>addImgToNode(ed,r.result,nd);r.readAsDataURL(f)})
+        })
+        inp.click()
+      })
+      ed.focus()
+    }
+  }
+  else{
+    const hasContent=nd.c.html||nd.c.text
+    if(inner.querySelector('.nd-edit')||inner.querySelector('.nd-img-add')||!inner.querySelector('.nd-text')){
+      if(nd.c.html)inner.innerHTML=`<div class="nd-text" style="font-size:${11*z}px">${nd.c.html}</div>`
+      else inner.innerHTML=`<div class="nd-text${hasContent?'':' ph'}" style="font-size:${11*z}px">${esc(nd.c.text)||'двойной клик…'}</div>`
+    }else{
+      if(!nd.c.html){const sp=inner.querySelector('.nd-text');sp.textContent=nd.c.text||'двойной клик…';sp.className='nd-text'+(hasContent?'':' ph');sp.style.fontSize=14*z+'px'}
+    }
+  }
+}
+function rCheck(inner,nd,z){
+  const items=nd.c.items||[];let h='';items.forEach((it,i)=>{h+=`<div class="cl-item"><input type="checkbox" class="cl-cb" data-i="${i}" ${it.done?'checked':''}><input class="cl-txt${it.done?' done':''}" value="${esc(it.text)}" data-i="${i}" placeholder="задача…" style="font-size:${13*z}px"></div>`});h+=`<button class="cl-add" style="font-size:${11*z}px">+ добавить</button>`
+  if(inner.querySelectorAll('.cl-item').length!==items.length||!inner.querySelector('.cl-add')){inner.innerHTML=h
+    inner.querySelectorAll('.cl-cb').forEach(cb=>{cb.addEventListener('mousedown',e=>e.stopPropagation());cb.addEventListener('change',e=>{nd.c.items[+e.target.dataset.i].done=e.target.checked;save();rc()})})
+    inner.querySelectorAll('.cl-txt').forEach(inp=>{inp.addEventListener('mousedown',e=>e.stopPropagation());inp.addEventListener('input',e=>{nd.c.items[+e.target.dataset.i].text=e.target.value;save()});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nd.c.items.push({text:'',done:false});save();rc();setTimeout(()=>{inner.querySelectorAll('.cl-txt')[inner.querySelectorAll('.cl-txt').length-1]?.focus()},30)};if(e.key==='Backspace'&&!e.target.value&&nd.c.items.length>1){nd.c.items.splice(+e.target.dataset.i,1);save();rc()}})})
+    inner.querySelector('.cl-add').addEventListener('mousedown',e=>e.stopPropagation());inner.querySelector('.cl-add').addEventListener('click',e=>{e.stopPropagation();nd.c.items.push({text:'',done:false});save();rc();setTimeout(()=>{inner.querySelectorAll('.cl-txt')[inner.querySelectorAll('.cl-txt').length-1]?.focus()},30)})}
+}
+function rCal(inner,nd,z){
+  const{year,month,marked}=nd.c,today=new Date(),isT=d=>today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d
+  const dim=new Date(year,month+1,0).getDate(),fd=(new Date(year,month,1).getDay()+6)%7
+  const mn=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек']
+  let h=`<div class="cal"><div class="cal-head"><button class="cal-nav" data-d="-1">‹</button><span class="cal-title">${mn[month]} ${year}</span><button class="cal-nav" data-d="1">›</button></div><div class="cal-grid">`
+  ;['пн','вт','ср','чт','пт','сб','вс'].forEach(d=>{h+=`<div class="cal-dow">${d}</div>`})
+  for(let i=0;i<fd;i++)h+=`<div class="cal-day empty"></div>`
+  for(let d=1;d<=dim;d++){const c=['cal-day'];if(isT(d))c.push('today');h+=`<div class="${c.join(' ')}" data-day="${d}">${d}</div>`}
+  h+=`</div></div>`;inner.innerHTML=h
+  inner.querySelectorAll('.cal-nav').forEach(btn=>{btn.addEventListener('mousedown',e=>e.stopPropagation());btn.addEventListener('click',e=>{e.stopPropagation();nd.c.month+=+btn.dataset.d;if(nd.c.month>11){nd.c.month=0;nd.c.year++}if(nd.c.month<0){nd.c.month=11;nd.c.year--};save();rc()})})
+  inner.querySelectorAll('.cal-day:not(.empty)').forEach(d=>{d.addEventListener('mousedown',e=>e.stopPropagation())})
+}
+function rImg(inner,nd,z){
+  if(nd.c.src){if(!inner.querySelector('.nd-img'))inner.innerHTML=`<img class="nd-img" src="${nd.c.src}">`}
+  else{if(!inner.querySelector('.img-placeholder')){inner.innerHTML=`<div class="img-placeholder">кликни для загрузки</div>`;inner.querySelector('.img-placeholder').addEventListener('click',e=>{e.stopPropagation();imgCb=(src)=>{nd.c.src=src;save();rc()};fup.click()});inner.querySelector('.img-placeholder').addEventListener('mousedown',e=>e.stopPropagation())}}
+}
+function rGrid(inner,nd,z){
+  const c=nd.c
+  if(!c.format){
+    // Format picker
+    if(inner.querySelector('.grd-pick'))return
+    const z2=z
+    inner.innerHTML=`<div class="grd-pick">
+      <div class="grd-opt" data-fmt="reels" style="font-size:${10*z2}px">рилс<br><span class="grd-opt-ratio" style="font-size:${8*z2}px">9:16</span></div>
+      <div class="grd-opt" data-fmt="post" style="font-size:${10*z2}px">пост<br><span class="grd-opt-ratio" style="font-size:${8*z2}px">1:1</span></div>
+    </div>`
+    inner.querySelectorAll('.grd-opt').forEach(opt=>{
+      opt.addEventListener('mousedown',e=>e.stopPropagation())
+      opt.addEventListener('click',e=>{
+        e.stopPropagation()
+        c.format=opt.dataset.fmt
+        const b=AB(),n=b?.nodes.find(n=>n.id===nd.id)
+        if(n){
+          if(c.format==='reels'){n.w=160;n.h=Math.round(160*16/9)}
+          else{n.w=200;n.h=200}
+        }
+        save();rc()
+      })
+    })
+    return
+  }
+  // Image frame — only re-render if state changed
+  const hasImg=inner.querySelector('.grd-frame')
+  const hasSrc=inner.querySelector('.grd-img')
+  if(c.src&&hasSrc)return
+  if(!c.src&&hasImg&&!inner.querySelector('.grd-img'))return
+  // Build frame
+  const badge=c.format==='reels'?'рилс · 9:16':'пост · 1:1'
+  if(c.src){
+    inner.innerHTML=`<div class="grd-frame"><img class="grd-img" src="${c.src}"><div class="grd-swap" title="заменить">↺</div></div>`
+    inner.querySelector('.grd-swap').addEventListener('mousedown',e=>e.stopPropagation())
+    inner.querySelector('.grd-swap').addEventListener('click',e=>{
+      e.stopPropagation()
+      imgCb=(src)=>{c.src=src;save();inner.innerHTML='';rGrid(inner,nd,z)}
+      fup.click()
+    })
+  }else{
+    inner.innerHTML=`<div class="grd-frame grd-empty"><span class="grd-badge" style="font-size:${8*z}px">${badge}</span><div class="grd-plus" style="font-size:${10*z}px">+ загрузить фото</div></div>`
+    inner.querySelector('.grd-empty').addEventListener('mousedown',e=>e.stopPropagation())
+    inner.querySelector('.grd-empty').addEventListener('click',e=>{
+      e.stopPropagation()
+      imgCb=(src)=>{c.src=src;save();inner.innerHTML='';rGrid(inner,nd,z)}
+      fup.click()
+    })
+  }
+}
+
+function rComment(inner,nd,z){
+  const c=nd.c
+  // avatar initial
+  const initials=c.from?c.from.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase():'?'
+
+  // build HTML
+  let h=`<div class="cmt">`
+  h+=`<div class="cmt-head" data-ca="toggle">
+    <div class="cmt-from-wrap">
+      <div class="cmt-avatar" style="font-size:${7*z}px;width:${18*z}px;height:${18*z}px">${esc(initials)}</div>
+      <input class="cmt-from" placeholder="имя…" value="${esc(c.from)}" style="font-size:${9*z}px" data-ca="from">
+    </div>
+    <span class="cmt-toggle${c.open?' open':''}">▾</span>
+  </div>`
+  h+=`<div class="cmt-body${c.open?' open':''}">`
+  h+=`<div class="cmt-divider"></div>`
+  h+=`<textarea class="cmt-text" placeholder="комментарий…" style="font-size:${10*z}px">${esc(c.text)}</textarea>`
+  h+=`<div class="cmt-footer">`
+  const b2=AB()
+  const linked=c.magnetTo?b2?.nodes.find(n=>n.id===c.magnetTo):null
+  h+=`<div class="cmt-magnet${c.magnetTo?' linked':''}" data-ca="magnet" style="font-size:${8*z}px">${c.magnetTo?(linked?'⊙ '+esc(linked.type):'⊙ ?'):'◯ прикрепить'}</div>`
+  h+=`</div></div></div>`
+  inner.innerHTML=h
+
+  // toggle open/close on head click
+  const head=inner.querySelector('.cmt-head')
+  head.addEventListener('mousedown',e=>{if(e.target.closest('.cmt-from'))return;e.stopPropagation()})
+  head.addEventListener('click',e=>{
+    if(e.target.closest('.cmt-from'))return
+    e.stopPropagation()
+    c.open=!c.open
+    // resize node height
+    const n2=AB()?.nodes.find(n=>n.id===nd.id)
+    if(n2)n2.h=c.open?110:34
+    save();rc()
+  })
+
+  // from input
+  const fromInp=inner.querySelector('.cmt-from')
+  fromInp.addEventListener('mousedown',e=>e.stopPropagation())
+  fromInp.addEventListener('input',()=>{c.from=fromInp.value;save()})
+  fromInp.addEventListener('blur',()=>{rc()}) // refresh avatar
+
+  // textarea
+  const ta=inner.querySelector('.cmt-text')
+  if(ta){
+    ta.addEventListener('mousedown',e=>e.stopPropagation())
+    ta.addEventListener('input',()=>{c.text=ta.value;save()})
+    ta.addEventListener('keydown',e=>e.stopPropagation())
+  }
+
+  // magnet
+  const mag=inner.querySelector('.cmt-magnet')
+  if(mag){
+    mag.addEventListener('mousedown',e=>e.stopPropagation())
+    mag.addEventListener('click',e=>{
+      e.stopPropagation()
+      const b3=AB();if(!b3)return
+      if(c.magnetTo){
+        // remove connection between this comment and its target
+        b3.conns=b3.conns.filter(x=>!(x.from===nd.id&&x.to===c.magnetTo)&&!(x.from===c.magnetTo&&x.to===nd.id))
+        c.magnetTo=null;save();rc();return
+      }
+      let nearest=null,minD=Infinity
+      b3.nodes.forEach(n=>{
+        if(n.id===nd.id||n.type==='comment')return
+        const dx=(n.x+n.w/2)-(nd.x+nd.w/2),dy=(n.y+n.h/2)-(nd.y+nd.h/2)
+        const d=Math.sqrt(dx*dx+dy*dy)
+        if(d<minD){minD=d;nearest=n}
+      })
+      if(nearest&&minD<500){
+        c.magnetTo=nearest.id
+        // add connection if not already exists
+        const alreadyConn=b3.conns.some(x=>(x.from===nd.id&&x.to===nearest.id)||(x.from===nearest.id&&x.to===nd.id))
+        if(!alreadyConn)b3.conns.push({id:gid(),from:nd.id,to:nearest.id,label:''})
+        save();rc()
+      }
+    })
+  }
+}
+
+function rCalc(inner,nd,z){
+  if(inner.querySelector('.calc'))return
+  const c=nd.c
+  const btns=['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','⌫','=']
+  let h=`<div class="calc"><div class="calc-display" style="font-size:${18*z}px">${esc(c.display)}</div><div class="calc-grid">`
+  btns.forEach(b=>{
+    let cls='calc-btn'
+    if('÷×−+'.includes(b))cls+=' op'
+    if(b==='=')cls+=' eq'
+    if(b==='C'||b==='±'||b==='%'||b==='⌫')cls+=' clr'
+    h+=`<button class="${cls}" data-cb="${b}" style="font-size:${11*z}px">${b}</button>`
+  })
+  h+='</div></div>'
+  inner.innerHTML=h
+  inner.querySelectorAll('.calc-btn').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.stopPropagation())
+    btn.addEventListener('click',e=>{
+      e.stopPropagation()
+      const v=btn.dataset.cb
+      calcPress(nd,v)
+      inner.querySelector('.calc-display').textContent=nd.c.display
+      save()
+    })
+  })
+}
+function calcPress(nd,v){
+  const c=nd.c
+  if(v==='C'){c.display='0';c.expr='';c.fresh=true;return}
+  if(v==='⌫'){
+    if(c.display.length>1)c.display=c.display.slice(0,-1)
+    else c.display='0'
+    c.fresh=false;return
+  }
+  if(v==='±'){
+    if(c.display!=='0')c.display=c.display.startsWith('-')?c.display.slice(1):'-'+c.display
+    return
+  }
+  if(v==='%'){
+    c.display=String(parseFloat(c.display)/100)
+    c.fresh=true;return
+  }
+  if('÷×−+'.includes(v)){
+    c.expr=c.display+' '+v+' '
+    c.fresh=true;return
+  }
+  if(v==='='){
+    if(!c.expr)return
+    const parts=c.expr.trim().split(' ')
+    const a=parseFloat(parts[0]),op=parts[1],b=parseFloat(c.display)
+    let r=0
+    if(op==='+')r=a+b;else if(op==='−')r=a-b;else if(op==='×')r=a*b;else if(op==='÷')r=b!==0?a/b:0
+    r=Math.round(r*1e10)/1e10
+    c.display=String(r);c.expr='';c.fresh=true;return
+  }
+  // digits and dot
+  if(c.fresh){c.display=v==='.'?'0.':v;c.fresh=false}
+  else{if(v==='.'&&c.display.includes('.'))return;c.display+=v}
+}
+
+function rTable(inner,nd,z){
+  if(inner.querySelector('.tbl-wrap')){return}
+  const rows=nd.c.rows
+  let h='<div class="tbl-wrap"><table class="tbl">'
+  rows.forEach((row,ri)=>{
+    h+='<tr>'
+    row.forEach((cell,ci)=>{
+      h+=`<td contenteditable="true" data-r="${ri}" data-c="${ci}" style="font-size:${11*z}px">${esc(cell)}</td>`
+    })
+    h+='</tr>'
+  })
+  h+='</table><div class="tbl-actions">'
+  h+=`<button class="tbl-ab" data-ta="row" style="font-size:${9*z}px">+ строка</button>`
+  h+=`<button class="tbl-ab" data-ta="col" style="font-size:${9*z}px">+ колонка</button>`
+  h+=`<button class="tbl-ab" data-ta="delrow" style="font-size:${9*z}px">− строка</button>`
+  h+=`<button class="tbl-ab" data-ta="delcol" style="font-size:${9*z}px">− колонка</button>`
+  h+='</div></div>'
+  inner.innerHTML=h
+  inner.querySelectorAll('td').forEach(td=>{
+    td.addEventListener('mousedown',e=>e.stopPropagation())
+    td.addEventListener('input',()=>{
+      nd.c.rows[+td.dataset.r][+td.dataset.c]=td.textContent
+      save()
+    })
+    td.addEventListener('keydown',e=>{
+      if(e.key==='Tab'){
+        e.preventDefault()
+        const r=+td.dataset.r,c=+td.dataset.c
+        let nr=r,nc=c+1
+        if(e.shiftKey){nc=c-1;if(nc<0){nr=r-1;nc=nd.c.rows[0].length-1}}
+        else{if(nc>=nd.c.rows[0].length){nr=r+1;nc=0}}
+        if(nr>=0&&nr<nd.c.rows.length){
+          const next=inner.querySelector(`td[data-r="${nr}"][data-c="${nc}"]`)
+          if(next)next.focus()
+        }
+      }
+    })
+  })
+  inner.querySelectorAll('.tbl-ab').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.stopPropagation())
+    btn.addEventListener('click',e=>{
+      e.stopPropagation()
+      const a=btn.dataset.ta
+      if(a==='row'){nd.c.rows.push(new Array(nd.c.rows[0].length).fill(''))}
+      if(a==='col'){nd.c.rows.forEach(r=>r.push(''))}
+      if(a==='delrow'&&nd.c.rows.length>1){nd.c.rows.pop()}
+      if(a==='delcol'&&nd.c.rows[0].length>1){nd.c.rows.forEach(r=>r.pop())}
+      save()
+      inner.innerHTML=''
+      rTable(inner,nd,z)
+    })
+  })
+}
+
+// ─── Lamp ───
+function rLamp(inner,nd,z){
+  const c=nd.c
+  const existing=inner.querySelector('.lamp')
+  if(existing){
+    // just update label font size
+    const lbl=existing.querySelector('.lamp-label')
+    if(lbl)lbl.style.fontSize=9*z+'px'
+    return
+  }
+  inner.innerHTML=`<div class="lamp">
+    <div class="lamp-aura lamp-aura-3"></div>
+    <div class="lamp-aura lamp-aura-2"></div>
+    <div class="lamp-ring lamp-ring-3"></div>
+    <div class="lamp-ring lamp-ring-2"></div>
+    <div class="lamp-ring lamp-ring-1"></div>
+    <div class="lamp-aura lamp-aura-1"></div>
+    <div class="lamp-core"></div>
+    <div class="lamp-label" contenteditable="true" style="font-size:${9*z}px">${c.label||''}</div>
+  </div>`
+  const lbl=inner.querySelector('.lamp-label')
+  lbl.addEventListener('mousedown',e=>e.stopPropagation())
+  lbl.addEventListener('keydown',e=>e.stopPropagation())
+  lbl.addEventListener('input',()=>{c.label=lbl.textContent;save()})
+}
+
+// ─── Shapes ───
+function rShape(inner,nd,z){
+  const c=nd.c
+  if(!c.form){
+    // shape picker
+    if(inner.querySelector('.shp-pick'))return
+    inner.innerHTML=`<div class="shp-pick"><div class="shp-opt square" data-f="square"></div><div class="shp-opt circle" data-f="circle"></div></div>`
+    inner.querySelectorAll('.shp-opt').forEach(o=>{
+      o.addEventListener('mousedown',e=>e.stopPropagation())
+      o.addEventListener('click',e=>{e.stopPropagation();c.form=o.dataset.f;save();inner.innerHTML='';rShape(inner,nd,z)})
+    })
+    return
+  }
+  const existing=inner.querySelector('.shp-body')
+  if(existing){
+    const txt=existing.querySelector('.shp-text')
+    if(txt)txt.style.fontSize=13*z+'px'
+    return
+  }
+  inner.innerHTML=`<div class="shp"><div class="shp-body ${c.form}"><div class="shp-text" contenteditable="true" style="font-size:${13*z}px">${c.text||''}</div></div></div>`
+  const txt=inner.querySelector('.shp-text')
+  txt.addEventListener('mousedown',e=>e.stopPropagation())
+  txt.addEventListener('input',()=>{c.text=txt.innerHTML;save()})
+  txt.addEventListener('keydown',e=>e.stopPropagation())
+}
+
+// ─── Timer ───
+let timerIntervals={}
+function fmtTime(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return(h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+
+function deadlineText(dl){
+  const now=new Date(),d=new Date(dl),diff=d-now
+  if(diff<0){const ago=Math.abs(diff),dd=Math.floor(ago/864e5);return dd===0?'сегодня истёк':dd===1?'вчера истёк':'истёк '+dd+' дн. назад'}
+  const dd=Math.floor(diff/864e5),hh=Math.floor(diff%864e5/36e5)
+  if(dd===0)return hh+' ч. осталось'
+  if(dd===1)return 'завтра'
+  return dd+' дн. осталось'
+}
+function fmtDate(d){const dd=String(d.getDate()).padStart(2,'0'),mm=String(d.getMonth()+1).padStart(2,'0'),yy=d.getFullYear();return yy+'-'+mm+'-'+dd}
+
+function rTimer(inner,nd,z){
+  const c=nd.c
+  if(!c.mode)c.mode='timer'
+  let h=`<div class="tmr">`
+  // mode toggle
+  h+=`<div class="tmr-mode"><button class="tmr-mode-btn${c.mode==='timer'?' active':''}" data-mode="timer" style="font-size:${8*z}px">таймер</button><button class="tmr-mode-btn${c.mode==='date'?' active':''}" data-mode="date" style="font-size:${8*z}px">дата</button></div>`
+
+  if(c.mode==='timer'){
+    // update left if running
+    if(c.running&&c.startedAt){
+      const elapsed=Math.floor((Date.now()-c.startedAt)/1000)
+      const total=c.h*3600+c.m*60+c.s
+      c.left=Math.max(0,total-elapsed)
+      if(c.left<=0){c.running=false;c.done=true;c.left=0}
+    }
+    const cls=c.done?'done':c.running?'running':''
+    h+=`<div class="tmr-display ${cls}" style="font-size:${22*z}px">${fmtTime(c.left)}</div>`
+    if(!c.running&&!c.done){
+      h+=`<div class="tmr-set"><input class="tmr-inp" data-u="h" value="${c.h}" style="font-size:${11*z}px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="m" value="${c.m}" style="font-size:${11*z}px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="s" value="${c.s}" style="font-size:${11*z}px"></div>`
+    }
+    h+=`<div class="tmr-controls">`
+    if(!c.running&&!c.done)h+=`<button class="tmr-btn go" data-ta="start" style="font-size:${9*z}px">старт</button>`
+    if(c.running)h+=`<button class="tmr-btn" data-ta="stop" style="font-size:${9*z}px">стоп</button>`
+    if(c.done)h+=`<button class="tmr-btn go" data-ta="reset" style="font-size:${9*z}px">сброс</button>`
+    if(!c.running&&!c.done&&c.left>0)h+=`<button class="tmr-btn" data-ta="reset" style="font-size:${9*z}px">сброс</button>`
+    h+=`</div>`
+  } else {
+    // date mode
+    const val=c.deadline||fmtDate(new Date())
+    h+=`<input type="date" class="tmr-date-inp" value="${val}" style="font-size:${11*z}px">`
+    if(c.deadline){
+      const overdue=new Date(c.deadline)<new Date()
+      h+=`<div class="tmr-countdown${overdue?' overdue':''}" style="font-size:${10*z}px">${deadlineText(c.deadline)}</div>`
+    }
+  }
+
+  // magnet
+  const b=AB()
+  const linked=c.magnetTo?b?.nodes.find(n=>n.id===c.magnetTo):null
+  h+=`<div class="tmr-magnet ${c.magnetTo?'linked':''}" data-ta="magnet" style="font-size:${8*z}px">${c.magnetTo?(linked?'⊙ '+linked.type:'⊙ ?'):'◯ примагнитить'}</div>`
+  h+=`</div>`
+  inner.innerHTML=h
+
+  // mode toggle
+  inner.querySelectorAll('.tmr-mode-btn').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.stopPropagation())
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();c.mode=btn.dataset.mode
+      if(c.mode==='date'){c.running=false;clearInterval(timerIntervals[nd.id])}
+      save();inner.innerHTML='';rTimer(inner,nd,z)
+    })
+  })
+
+  // date input
+  const di=inner.querySelector('.tmr-date-inp')
+  if(di){
+    di.addEventListener('mousedown',e=>e.stopPropagation())
+    di.addEventListener('change',()=>{c.deadline=di.value;save();inner.innerHTML='';rTimer(inner,nd,z)})
+  }
+
+  // timer inputs
+  inner.querySelectorAll('.tmr-inp').forEach(inp=>{
+    inp.addEventListener('mousedown',e=>e.stopPropagation())
+    inp.addEventListener('input',()=>{
+      let v=parseInt(inp.value)||0
+      if(inp.dataset.u==='h')v=Math.min(99,Math.max(0,v))
+      else v=Math.min(59,Math.max(0,v))
+      c[inp.dataset.u]=v
+      c.left=c.h*3600+c.m*60+c.s
+      save()
+    })
+  })
+
+  // buttons
+  inner.querySelectorAll('.tmr-btn').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.stopPropagation())
+    btn.addEventListener('click',e=>{
+      e.stopPropagation()
+      const a=btn.dataset.ta
+      if(a==='start'){
+        c.left=c.h*3600+c.m*60+c.s
+        if(c.left<=0)return
+        c.running=true;c.done=false;c.startedAt=Date.now()
+        startTimerTick(nd);save()
+      }
+      if(a==='stop'){c.running=false;c.startedAt=null;clearInterval(timerIntervals[nd.id]);save()}
+      if(a==='reset'){c.running=false;c.done=false;c.left=c.h*3600+c.m*60+c.s;c.startedAt=null;clearInterval(timerIntervals[nd.id]);save()}
+      inner.innerHTML='';rTimer(inner,nd,z)
+    })
+  })
+
+  // magnet
+  const mag=inner.querySelector('.tmr-magnet')
+  if(mag){
+    mag.addEventListener('mousedown',e=>e.stopPropagation())
+    mag.addEventListener('click',e=>{
+      e.stopPropagation()
+      if(c.magnetTo){c.magnetTo=null;save();inner.innerHTML='';rTimer(inner,nd,z);return}
+      const b=AB();if(!b)return
+      let nearest=null,minD=Infinity
+      b.nodes.forEach(n=>{
+        if(n.id===nd.id||n.type==='timer')return
+        const dx=(n.x+n.w/2)-(nd.x+nd.w/2),dy=(n.y+n.h/2)-(nd.y+nd.h/2)
+        const d=Math.sqrt(dx*dx+dy*dy)
+        if(d<minD){minD=d;nearest=n}
+      })
+      if(nearest&&minD<400){c.magnetTo=nearest.id;save();inner.innerHTML='';rTimer(inner,nd,z)}
+    })
+  }
+
+  if(c.running)startTimerTick(nd)
+}
+
+function startTimerTick(nd){
+  if(timerIntervals[nd.id])clearInterval(timerIntervals[nd.id])
+  timerIntervals[nd.id]=setInterval(()=>{
+    if(!nd.c.running){clearInterval(timerIntervals[nd.id]);return}
+    const elapsed=Math.floor((Date.now()-nd.c.startedAt)/1000)
+    const total=nd.c.h*3600+nd.c.m*60+nd.c.s
+    nd.c.left=Math.max(0,total-elapsed)
+    if(nd.c.left<=0){nd.c.running=false;nd.c.done=true;nd.c.left=0;clearInterval(timerIntervals[nd.id]);save()}
+    rc()
+  },1000)
+}
+
+function renderSVG(b,z,vx,vy){
+  sl.innerHTML='';if(!b)return
+  const sw=Math.max(0.8,1*z)  // same as node border thickness scaled
+  b.conns.forEach(c=>{
+    const f=b.nodes.find(n=>n.id===c.from),t=b.nodes.find(n=>n.id===c.to);if(!f||!t)return
+    // get exit points with outward normals
+    const ftcx=t.x+(t.w||180)/2,ftcy=t.y+(t.h||80)/2
+    const tfcx=f.x+(f.w||180)/2,tfcy=f.y+(f.h||80)/2
+    const p1=epDir(f,ftcx,ftcy),p2=epDir(t,tfcx,tfcy)
+    // screen coords
+    const x1=p1.x*z+vx,y1=p1.y*z+vy,x2=p2.x*z+vx,y2=p2.y*z+vy
+    // bezier control points — pull outward from each edge
+    const dist=Math.sqrt((x2-x1)**2+(y2-y1)**2)
+    const pull=Math.max(40*z,Math.min(dist*0.45,160*z))
+    const cx1=x1+p1.nx*pull,cy1=y1+p1.ny*pull
+    const cx2=x2+p2.nx*pull,cy2=y2+p2.ny*pull
+    // curve path
+    const d=`M${x1},${y1} C${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`
+    sl.appendChild(se('path',{d,stroke:'#1C1C1E','stroke-width':sw,fill:'none','stroke-linecap':'round'}))
+    // arrow at p2 — direction from last control point to endpoint
+    const adx=x2-cx2,ady=y2-cy2,aa=Math.atan2(ady,adx)
+    const as=6*Math.min(z,1.5)
+    const ad=`M${x2},${y2}L${x2+as*Math.cos(aa+Math.PI*0.82)},${y2+as*Math.sin(aa+Math.PI*0.82)}M${x2},${y2}L${x2+as*Math.cos(aa-Math.PI*0.82)},${y2+as*Math.sin(aa-Math.PI*0.82)}`
+    sl.appendChild(se('path',{d:ad,stroke:'#1C1C1E','stroke-width':sw,fill:'none','stroke-linecap':'round'}))
+    // label
+    const mx2=(x1+x2)/2,my2=(y1+y2)/2
+    if(c.label){const txt=document.createElementNS('http://www.w3.org/2000/svg','text');txt.setAttribute('x',mx2);txt.setAttribute('y',my2-8*z);txt.setAttribute('text-anchor','middle');txt.setAttribute('font-size',10*z);txt.setAttribute('fill','#636366');txt.style.pointerEvents='none';txt.textContent=c.label;sl.appendChild(txt)}
+    // clickable midpoint handle
+    const ci=se('circle',{cx:mx2,cy:my2,r:10,fill:'transparent',stroke:'transparent',style:'cursor:pointer;pointer-events:all;'})
+    ci.addEventListener('mousedown',e=>e.stopPropagation())
+    ci.addEventListener('click',e=>{e.stopPropagation();const l=prompt('Подпись (пусто = удалить):',c.label||'');if(l===null)return;if(l==='')b.conns=b.conns.filter(x=>x.id!==c.id);else c.label=l;save();rc()})
+    ci.addEventListener('mouseenter',()=>{ci.setAttribute('fill','rgba(0,0,0,0.06)');ci.setAttribute('stroke','#1C1C1E');ci.setAttribute('stroke-width','0.8')})
+    ci.addEventListener('mouseleave',()=>{ci.setAttribute('fill','transparent');ci.setAttribute('stroke','transparent')})
+    sl.appendChild(ci)
+  })
+  // preview line while connecting
+  if(cf!==null){
+    const f=b.nodes.find(n=>n.id===cf)
+    if(f){
+      const r=cv.getBoundingClientRect()
+      const mx_=mx-r.left,my_=my-r.top
+      const ftcx=mx_/z-vx/z,ftcy=my_/z-vy/z
+      const p1=epDir(f,ftcx,ftcy)
+      const x1=p1.x*z+vx,y1=p1.y*z+vy
+      const dist=Math.sqrt((mx_-x1)**2+(my_-y1)**2)
+      const pull=Math.max(40*z,Math.min(dist*0.45,160*z))
+      const cx1_=x1+p1.nx*pull,cy1_=y1+p1.ny*pull
+      const d=`M${x1},${y1} C${cx1_},${cy1_} ${mx_},${my_} ${mx_},${my_}`
+      sl.appendChild(se('path',{d,stroke:'#007AFF','stroke-width':1.2,fill:'none','stroke-linecap':'round','stroke-dasharray':`${6*z} ${4*z}`,'pointer-events':'none'}))
+    }
+    let badge=cv.querySelector('.badge')
+    if(!badge){badge=document.createElement('div');badge.className='badge';badge.textContent='кликни на цель · esc — отмена';cv.appendChild(badge)}
+  }else{const badge=cv.querySelector('.badge');if(badge)badge.remove()}
+}
+
+
+load();R()
+// apply share mode after render
+if(shareMode){
+  document.getElementById('app').classList.add('share-view')
+  // hide splash in share mode
+  const sp=document.getElementById('splash');if(sp)sp.remove()
+  // show read-only badge
+  const badge=document.createElement('div')
+  badge.className='share-view-badge'
+  badge.textContent='режим просмотра'
+  document.body.appendChild(badge)
+  // disable all editing interactions
+  cv.addEventListener('dblclick',e=>e.stopPropagation(),true)
+}
+</script>
