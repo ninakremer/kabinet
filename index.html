@@ -255,6 +255,8 @@
     .nd textarea{width:100%;min-height:60px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;resize:none;padding:0;margin:0;line-height:1.45}
     .nd-edit{width:100%;min-height:40px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;line-height:1.45;word-break:break-word}
     .nd-edit:empty::before{content:'двойной клик…';color:#AEAEB2;pointer-events:none}
+    .nd-limit-warn{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:9px;padding:3px 8px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+    .nd-limit-warn.visible{opacity:1}
     .nd-edit{min-height:32px;outline:none}
     .nd-edit img{max-width:100%;height:auto;display:block;margin:4px 0;border-radius:4px}
     .nd-edit.dragover{outline:1px dashed #000;outline-offset:-2px}
@@ -379,7 +381,16 @@
     .grd-plus{font-size:11px;color:#1C1C1E;border:1px dashed #ccc;padding:5px 14px;transition:border-color .1s}
     .grd-swap{position:absolute;top:6px;right:6px;width:22px;height:22px;background:rgba(255,255,255,.85);border:1px solid #ccc;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;opacity:0;transition:opacity .15s}
     .grd-frame:hover .grd-swap{opacity:1}
-    .rh{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:nwse-resize;opacity:.4;z-index:50}
+    .rh{position:absolute;z-index:50;opacity:0;transition:opacity .15s}
+    .nd:hover .rh{opacity:1}
+    .rh-se{right:-4px;bottom:-4px;width:14px;height:14px;cursor:nwse-resize;background:#000;border-radius:50%}
+    .rh-sw{left:-4px;bottom:-4px;width:14px;height:14px;cursor:nesw-resize;background:#000;border-radius:50%}
+    .rh-ne{right:-4px;top:-4px;width:14px;height:14px;cursor:nesw-resize;background:#000;border-radius:50%}
+    .rh-nw{left:-4px;top:-4px;width:14px;height:14px;cursor:nwse-resize;background:#000;border-radius:50%}
+    .rh-n{top:-3px;left:50%;transform:translateX(-50%);width:28px;height:6px;cursor:n-resize;background:#000;border-radius:3px}
+    .rh-s{bottom:-3px;left:50%;transform:translateX(-50%);width:28px;height:6px;cursor:s-resize;background:#000;border-radius:3px}
+    .rh-w{left:-3px;top:50%;transform:translateY(-50%);width:6px;height:28px;cursor:w-resize;background:#000;border-radius:3px}
+    .rh-e{right:-3px;top:50%;transform:translateY(-50%);width:6px;height:28px;cursor:e-resize;background:#000;border-radius:3px}
     .na{display:none !important}
     .na button{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;background:none;border-radius:6px;cursor:pointer}
     .na button:hover{background:rgba(0,0,0,.04)}
@@ -439,7 +450,7 @@
     .share-view .lp{display:none}
     .share-view .top{display:none}
     .share-view .cv{cursor:grab}
-    .share-view .rh{display:none}
+    .share-view .rh{display:none!important}
     .share-view-badge{position:fixed;bottom:20px;right:20px;font-size:11px;color:#888;background:#fff;border:1px solid #e5e5ea;padding:8px 14px;z-index:999;pointer-events:none;letter-spacing:.02em}
     /* Share link button */
     .exp-divider{height:1px;background:#e5e5ea;margin:14px 0}
@@ -1720,14 +1731,14 @@ window.addEventListener('mousemove',e=>{
     return
   }
   if(rsz){
-    const z=V().z,n=AB()?.nodes.find(n=>n.id===rsz.id);if(!n)return
-    n.w=Math.max(80,rsz.sw+(e.clientX-rsz.sx)/z)
-    n.h=Math.max(50,rsz.sh+(e.clientY-rsz.sy)/z)
-    // lock aspect ratio for grid
-    if(n.type==='grid'&&n.c.format){
-      const ratio=n.c.format==='reels'?16/9:1
-      n.h=n.w*ratio
-    }
+    const v=V(),z=v.z,n=AB()?.nodes.find(n=>n.id===rsz.id);if(!n)return
+    const dx=(e.clientX-rsz.sx)/z,dy=(e.clientY-rsz.sy)/z
+    const d=rsz.dir
+    if(d.includes('e'))n.w=Math.max(80,rsz.sw+dx)
+    if(d.includes('s'))n.h=Math.max(50,rsz.sh+dy)
+    if(d.includes('w')){const nw=Math.max(80,rsz.sw-dx);n.x=rsz.nx+(rsz.sw-nw);n.w=nw}
+    if(d.includes('n')){const nh=Math.max(50,rsz.sh-dy);n.y=rsz.ny+(rsz.sh-nh);n.h=nh}
+    if(n.type==='grid'&&n.c.format){const ratio=n.c.format==='reels'?16/9:1;n.h=n.w*ratio}
     rc();return
   }
   if(pan&&AB()){
@@ -1829,10 +1840,26 @@ function renderFolderView(f){
 
 function mkNd(nd){
   const el=document.createElement('div');el.className='nd';el.dataset.id=nd.id
-  el.innerHTML=`<div class="nd-drag-handle"></div><div class="nd-inner"></div><div class="rh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1v8H1" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/><path d="M9 5v4H5" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/></svg></div>`
+  el.innerHTML=`<div class="nd-drag-handle"></div><div class="nd-inner"></div>
+    <div class="rh rh-se"></div>
+    <div class="rh rh-s"></div>
+    <div class="rh rh-e"></div>
+    <div class="rh rh-n"></div>
+    <div class="rh rh-w"></div>
+    <div class="rh rh-nw"></div>
+    <div class="rh rh-ne"></div>
+    <div class="rh rh-sw"></div>`
   el.addEventListener('mousedown',e=>{if(!e.target.closest('.rh'))ndDown(e,nd.id)},true)
   el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
-  el.querySelector('.rh').addEventListener('mousedown',e=>{if(shareMode)return;e.stopPropagation();e.preventDefault();const n=AB()?.nodes.find(n=>n.id===nd.id);if(n)rsz={id:nd.id,sx:e.clientX,sy:e.clientY,sw:n.w||180,sh:n.h||80}})
+  el.querySelectorAll('.rh').forEach(rh=>{
+    rh.addEventListener('mousedown',e=>{
+      if(shareMode)return
+      e.stopPropagation();e.preventDefault()
+      const n=AB()?.nodes.find(n=>n.id===nd.id);if(!n)return
+      const dir=rh.className.replace('rh rh-','')
+      rsz={id:nd.id,sx:e.clientX,sy:e.clientY,sw:n.w||180,sh:n.h||80,nx:n.x,ny:n.y,dir}
+    })
+  })
   cv.appendChild(el);return el
 }
 
@@ -1844,7 +1871,7 @@ function upNd(el,nd,z,vx,vy){
   el.classList.toggle('sel',sel===nd.id);el.classList.toggle('conn-src',cf===nd.id)
   if((nd.type==='shape'&&nd.c.form)||nd.type==='lamp'){el.style.background='none';el.style.border='none';el.style.boxShadow='none'}
   else{el.style.background='';el.style.border='';el.style.boxShadow=''}
-  if(nd.type==='lamp'){el.style.borderRadius='50%';el.style.overflow='hidden'}
+  if(nd.type==='lamp'){el.style.borderRadius='50%';el.style.overflow='visible'}
   else{el.style.borderRadius='';el.style.overflow='visible'}
   const inner=el.querySelector('.nd-inner')
   if((nd.type==='shape'&&nd.c.form)||nd.type==='lamp'){inner.style.padding='0';inner.style.height='100%';inner.style.overflow='hidden';inner.style.borderRadius='50%'}
@@ -1888,7 +1915,25 @@ function rText(inner,nd,z){
       inner.innerHTML=`<div class="nd-edit" contenteditable="true" style="font-size:${11*z}px">${nd.c.html||esc(nd.c.text||'')}</div><div class="nd-img-add">+ фото</div>`
       const ed=inner.querySelector('.nd-edit')
       ed.addEventListener('mousedown',e=>e.stopPropagation())
-      ed.addEventListener('input',()=>{nd.c.html=ed.innerHTML;nd.c.text=ed.textContent;save()})
+      const LIMIT=2500
+      const limitWarn=document.createElement('div')
+      limitWarn.className='nd-limit-warn'
+      limitWarn.textContent='максимум 2500 символов'
+      inner.appendChild(limitWarn)
+      ed.addEventListener('input',()=>{
+        const len=ed.textContent.length
+        if(len>LIMIT){
+          // trim to limit
+          const sel=window.getSelection(),range=sel.getRangeAt(0)
+          ed.textContent=ed.textContent.slice(0,LIMIT)
+          // restore cursor to end
+          const r=document.createRange();r.selectNodeContents(ed);r.collapse(false)
+          sel.removeAllRanges();sel.addRange(r)
+          limitWarn.classList.add('visible')
+          setTimeout(()=>limitWarn.classList.remove('visible'),2500)
+        }
+        nd.c.html=ed.innerHTML;nd.c.text=ed.textContent;save()
+      })
       ed.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){edt=null;rc()}})
       ed.addEventListener('dragover',e=>{e.preventDefault();ed.classList.add('dragover')})
       ed.addEventListener('dragleave',()=>ed.classList.remove('dragover'))
