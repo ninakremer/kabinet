@@ -354,6 +354,17 @@
     .lamp-ring-2{inset:5%;border-color:rgba(0,0,0,0.06)}
     .lamp-ring-3{inset:-5%;border-color:rgba(0,0,0,0.03)}
     .nd-img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block;cursor:grab;pointer-events:none}
+    .photos-mason{display:flex;gap:3px;align-items:flex-start;width:100%}
+    .photos-col{flex:1;display:flex;flex-direction:column;gap:3px}
+    .photos-item{position:relative;cursor:default}
+    .photos-item img{width:100%;display:block;border-radius:2px}
+    .photos-item .photos-del{position:absolute;top:3px;right:3px;width:16px;height:16px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;display:none;align-items:center;justify-content:center;cursor:pointer;border-radius:50%}
+    .photos-item:hover .photos-del{display:flex}
+    .photos-add-btn{width:100%;padding:8px 0;text-align:center;font-size:10px;color:#aaa;cursor:pointer;border:1px dashed #ddd;margin-top:4px;box-sizing:border-box}
+    .photos-add-btn:hover{color:#000;border-color:#000}
+    .nd-drag-handle{height:12px;width:100%;cursor:grab;position:relative;z-index:2;flex-shrink:0;background:transparent}
+    .nd-drag-handle:active{cursor:grabbing}
+    .nd:hover .nd-drag-handle{background:rgba(0,0,0,.04)}
     .img-placeholder{width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;cursor:pointer;border-radius:11px}
     /* Grid tool */
     .grd-pick{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;gap:10px}
@@ -637,6 +648,13 @@
       <span class="guide-icon">⬚</span>
       <div><b>изображение</b>
         <p>отдельный блок только для фото. кликни — выбери файл. или перетащи картинку прямо на холст.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <span class="guide-icon">⊟</span>
+      <div><b>фотосетка</b>
+        <p>сетка 3×3 для загрузки нескольких фото. нажми + в ячейке — добавь фото. наведи на фото — появится ✕ чтобы удалить.</p>
       </div>
     </div>
 
@@ -1021,6 +1039,7 @@ function renderLP(){
     {t:'connect',l:'связь'},
     {t:'grid',l:'грид'},
     {t:'comment',l:'комментарий'},
+    {t:'photos',l:'фотосетка'},
   ]
   tools.forEach(t=>{
     h+=`<button class="tbtn${tool===t.t?' active':''}" data-tool="${t.t}"><span class="tl">${t.l}</span></button>`
@@ -1624,10 +1643,12 @@ function addNode(type,bx,by,extra){
   if(type==='shape'){nd.c={form:null,text:''};nd.w=100;nd.h=100}
   if(type==='lamp'){nd.c={label:''};nd.w=120;nd.h=120}
   if(type==='image'){nd.c={src:extra||''};nd.w=200;nd.h=160}
+  if(type==='photos'){nd.c={imgs:[]};nd.w=280;nd.h=200}
   if(type==='grid'){nd.c={format:null,src:''};nd.w=180;nd.h=140}
   if(type==='comment'){nd.c={from:'',text:'',open:false,magnetTo:null};nd.w=160;nd.h=34}
   b.nodes.push(nd);sel=id;save();rc()
   if(type==='text')startEdit(id)
+  else setTool('hand')
 }
 function delNode(id){const b=AB();if(!b)return;b.nodes.forEach(n=>{if((n.type==='timer'||n.type==='comment')&&n.c.magnetTo===id)n.c.magnetTo=null});b.nodes=b.nodes.filter(n=>n.id!==id);b.conns=b.conns.filter(c=>c.from!==id&&c.to!==id);if(sel===id)sel=null;if(edt===id)edt=null;save();rc()}
 function addConn(a,b2){if(a===b2)return;const b=AB();if(!b)return;if(b.conns.some(c=>(c.from===a&&c.to===b2)||(c.from===b2&&c.to===a)))return;b.conns.push({id:gid(),from:a,to:b2,label:''});save()}
@@ -1641,8 +1662,15 @@ cv.addEventListener('mousedown',e=>{
   if(tool!=='hand'&&tool!=='connect'){
     const p=s2b(e.clientX,e.clientY)
     if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click()}
+    else if(tool==='photos'){addNode('photos',p.x-140,p.y-100)}
     else addNode(tool,p.x-90,p.y-40)
-    setTool('hand');return
+    setTool('hand')
+    // immediately start dragging the just-created node
+    if(tool!=='image'&&sel!==null){
+      const b=AB(),n=b?.nodes.find(n=>n.id===sel)
+      if(n){drag={id:sel,sx:e.clientX,sy:e.clientY,nx:n.x,ny:n.y};cv.classList.add('dragging-node')}
+    }
+    return
   }
   if(tool==='hand'){
     const now=Date.now(),dx=e.clientX-lcx,dy=e.clientY-lcy
@@ -1689,7 +1717,6 @@ window.addEventListener('mousemove',e=>{
       const te=cv.querySelector(`.nd[data-id="${t.id}"]`)
       if(te){te.style.left=(t.x*z+v.x)+'px';te.style.top=(t.y*z+v.y)+'px'}
     }})
-    renderSVG(b,z,v.x,v.y)
     return
   }
   if(rsz){
@@ -1719,6 +1746,7 @@ window.addEventListener('mousemove',e=>{
   if(cf)rc()
 })
 window.addEventListener('mouseup',e=>{
+  if(drag){const b=AB(),v=V();if(b)renderSVG(b,v.z,v.x,v.y)}
   if(drag){save();drag=null;cv.classList.remove('dragging-node');cv.querySelectorAll('.nd.dragging').forEach(el=>el.classList.remove('dragging'))}
   if(rsz){save();rsz=null}
   if(pan){pan=null;cv.classList.remove('panning')}
@@ -1801,8 +1829,8 @@ function renderFolderView(f){
 
 function mkNd(nd){
   const el=document.createElement('div');el.className='nd';el.dataset.id=nd.id
-  el.innerHTML=`<div class="nd-inner"></div><div class="rh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1v8H1" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/><path d="M9 5v4H5" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/></svg></div>`
-  el.addEventListener('mousedown',e=>ndDown(e,nd.id))
+  el.innerHTML=`<div class="nd-drag-handle"></div><div class="nd-inner"></div><div class="rh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1v8H1" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/><path d="M9 5v4H5" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/></svg></div>`
+  el.addEventListener('mousedown',e=>ndDown(e,nd.id),true)
   el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
   el.querySelector('.rh').addEventListener('mousedown',e=>{if(shareMode)return;e.stopPropagation();e.preventDefault();const n=AB()?.nodes.find(n=>n.id===nd.id);if(n)rsz={id:nd.id,sx:e.clientX,sy:e.clientY,sw:n.w||180,sh:n.h||80}})
   cv.appendChild(el);return el
@@ -1827,6 +1855,7 @@ function upNd(el,nd,z,vx,vy){
   else if(nd.type==='checklist')rCheck(inner,nd,z)
   else if(nd.type==='calendar')rCal(inner,nd,z)
   else if(nd.type==='image')rImg(inner,nd,z)
+  else if(nd.type==='photos')rPhotos(inner,nd,z)
   else if(nd.type==='calc')rCalc(inner,nd,z)
   else if(nd.type==='table')rTable(inner,nd,z)
   else if(nd.type==='timer')rTimer(inner,nd,z)
@@ -1918,6 +1947,61 @@ function rCal(inner,nd,z){
 function rImg(inner,nd,z){
   if(nd.c.src){if(!inner.querySelector('.nd-img'))inner.innerHTML=`<img class="nd-img" src="${nd.c.src}">`}
   else{if(!inner.querySelector('.img-placeholder')){inner.innerHTML=`<div class="img-placeholder">кликни для загрузки</div>`;inner.querySelector('.img-placeholder').addEventListener('click',e=>{e.stopPropagation();imgCb=(src)=>{nd.c.src=src;save();rc()};fup.click()});inner.querySelector('.img-placeholder').addEventListener('mousedown',e=>e.stopPropagation())}}
+}
+function rPhotos(inner,nd,z){
+  if(inner.dataset.photosReady==='1')return
+  inner.dataset.photosReady='1'
+  inner.innerHTML=''
+  inner.style.cssText='overflow-y:auto;overflow-x:hidden;padding:4px;box-sizing:border-box;height:100%'
+  // masonry wrapper: 3 columns
+  const wrap=document.createElement('div')
+  wrap.className='photos-mason'
+  const cols=[0,1,2].map(()=>{const c=document.createElement('div');c.className='photos-col';wrap.appendChild(c);return c})
+  inner.appendChild(wrap)
+  // add button at bottom
+  const addBtn=document.createElement('div')
+  addBtn.className='photos-add-btn'
+  addBtn.textContent='+ добавить фото'
+  addBtn.addEventListener('mousedown',e=>e.stopPropagation())
+  addBtn.addEventListener('click',e=>{
+    e.stopPropagation()
+    fup.multiple=true
+    imgCb=(src)=>{
+      nd.c.imgs.push(src)
+      save()
+      inner.dataset.photosReady='0'
+      rPhotos(inner,nd,z)
+    }
+    fup.click()
+  })
+  inner.appendChild(addBtn)
+  // render imgs into shortest column
+  function shortestCol(){return cols.reduce((a,b)=>a.offsetHeight<=b.offsetHeight?a:b)}
+  ;(nd.c.imgs||[]).forEach((src,idx)=>{
+    const wrap2=document.createElement('div')
+    wrap2.className='photos-item'
+    const img=document.createElement('img')
+    img.src=src
+    img.style.cssText='width:100%;display:block;border-radius:2px'
+    const del=document.createElement('div')
+    del.className='photos-del'
+    del.textContent='✕'
+    del.addEventListener('mousedown',e=>e.stopPropagation())
+    del.addEventListener('click',e=>{
+      e.stopPropagation()
+      nd.c.imgs.splice(idx,1)
+      save()
+      inner.dataset.photosReady='0'
+      inner.innerHTML=''
+      rPhotos(inner,nd,z)
+    })
+    wrap2.appendChild(img)
+    wrap2.appendChild(del)
+    shortestCol().appendChild(wrap2)
+  })
+  // scroll inside node — stop propagation
+  inner.addEventListener('wheel',e=>e.stopPropagation())
+  inner.addEventListener('mousedown',e=>{if(e.target===inner||e.target===wrap)return;e.stopPropagation()})
 }
 function rGrid(inner,nd,z){
   const c=nd.c
