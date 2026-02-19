@@ -1830,7 +1830,7 @@ function renderFolderView(f){
 function mkNd(nd){
   const el=document.createElement('div');el.className='nd';el.dataset.id=nd.id
   el.innerHTML=`<div class="nd-drag-handle"></div><div class="nd-inner"></div><div class="rh"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1v8H1" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/><path d="M9 5v4H5" stroke="#D1D1D6" stroke-width="1.2" stroke-linecap="round"/></svg></div>`
-  el.addEventListener('mousedown',e=>ndDown(e,nd.id),true)
+  el.addEventListener('mousedown',e=>{if(!e.target.closest('.rh'))ndDown(e,nd.id)},true)
   el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
   el.querySelector('.rh').addEventListener('mousedown',e=>{if(shareMode)return;e.stopPropagation();e.preventDefault();const n=AB()?.nodes.find(n=>n.id===nd.id);if(n)rsz={id:nd.id,sx:e.clientX,sy:e.clientY,sw:n.w||180,sh:n.h||80}})
   cv.appendChild(el);return el
