@@ -948,6 +948,7 @@ function undo(){
   if(!undoStack.length)return
   redoStack.push(JSON.stringify(D))
   undoPause=true
+  clearAllTimers()
   D=JSON.parse(undoStack.pop())
   localStorage.setItem(SK,JSON.stringify(D))
   undoPause=false
@@ -957,6 +958,7 @@ function redo(){
   if(!redoStack.length)return
   undoStack.push(JSON.stringify(D))
   undoPause=true
+  clearAllTimers()
   D=JSON.parse(redoStack.pop())
   localStorage.setItem(SK,JSON.stringify(D))
   undoPause=false
@@ -998,9 +1000,11 @@ function epDir(n,tx,ty){
 function se(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e}
 
 // ─── Active switching ───
+function clearAllTimers(){Object.keys(timerIntervals).forEach(k=>{clearInterval(timerIntervals[k]);delete timerIntervals[k]})}
 function activate(type,id){
   // Save note content before switching
   if(D.active.type==='note'){const n=AN();if(n)n.content=nb.innerHTML}
+  clearAllTimers()
   D.active={type,id};sel=null;edt=null;cf=null;save();R()
 }
 
@@ -1671,13 +1675,14 @@ cv.addEventListener('mousedown',e=>{
   if(!AB())return
   if(e.target.closest('.nd')||e.target.closest('.na'))return
   if(tool!=='hand'&&tool!=='connect'){
+    const origTool=tool
     const p=s2b(e.clientX,e.clientY)
-    if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click()}
-    else if(tool==='photos'){addNode('photos',p.x-140,p.y-100)}
-    else addNode(tool,p.x-90,p.y-40)
+    if(origTool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click()}
+    else if(origTool==='photos'){addNode('photos',p.x-140,p.y-100)}
+    else addNode(origTool,p.x-90,p.y-40)
     setTool('hand')
-    // immediately start dragging the just-created node
-    if(tool!=='image'&&sel!==null){
+    // immediately start dragging the just-created node (not for image — node is created async)
+    if(origTool!=='image'&&sel!==null){
       const b=AB(),n=b?.nodes.find(n=>n.id===sel)
       if(n){drag={id:sel,sx:e.clientX,sy:e.clientY,nx:n.x,ny:n.y};cv.classList.add('dragging-node')}
     }
@@ -1763,13 +1768,15 @@ window.addEventListener('mouseup',e=>{
   if(pan){pan=null;cv.classList.remove('panning')}
 })
 
-fup.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f||!imgCb)return;const r=new FileReader();r.onload=ev=>{imgCb(ev.target.result);imgCb=null};r.readAsDataURL(f);fup.value=''})
+fup.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f||!imgCb)return;const r=new FileReader();r.onload=ev=>{imgCb(ev.target.result);imgCb=null};r.readAsDataURL(f);fup.value='';fup.multiple=false})
 
 // Keyboard
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.contentEditable==='true')return
   if(e.key==='Escape'){cf=null;sel=null;setTool('hand');rc()}
-  if((e.key==='Delete'||e.key==='Backspace')&&sel)delNode(sel)
+  if((e.key==='Delete'||e.key==='Backspace')&&sel){e.preventDefault();delNode(sel)}
+  if(e.key==='z'&&(e.metaKey||e.ctrlKey)&&!e.shiftKey){e.preventDefault();undo()}
+  if((e.key==='y'&&(e.metaKey||e.ctrlKey))||(e.key==='z'&&(e.metaKey||e.ctrlKey)&&e.shiftKey)){e.preventDefault();redo()}
   if(e.key==='d'&&(e.metaKey||e.ctrlKey)&&sel){
     e.preventDefault();const b=AB();if(!b)return;const o=b.nodes.find(n=>n.id===sel);if(o){const id=b.nid++;b.nodes.push({...JSON.parse(JSON.stringify(o)),id,x:o.x+20,y:o.y+20});sel=id;save();rc()}
   }
@@ -1966,7 +1973,7 @@ function rText(inner,nd,z){
       if(nd.c.html)inner.innerHTML=`<div class="nd-text" style="font-size:${11*z}px">${nd.c.html}</div>`
       else inner.innerHTML=`<div class="nd-text${hasContent?'':' ph'}" style="font-size:${11*z}px">${esc(nd.c.text)||'двойной клик…'}</div>`
     }else{
-      if(!nd.c.html){const sp=inner.querySelector('.nd-text');sp.textContent=nd.c.text||'двойной клик…';sp.className='nd-text'+(hasContent?'':' ph');sp.style.fontSize=14*z+'px'}
+      if(!nd.c.html){const sp=inner.querySelector('.nd-text');sp.textContent=nd.c.text||'двойной клик…';sp.className='nd-text'+(hasContent?'':' ph');sp.style.fontSize=11*z+'px'}
     }
   }
 }
