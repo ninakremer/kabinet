@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>кабинет</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='none' stroke='%23636366' stroke-width='8'/><circle cx='50' cy='50' r='12' fill='%23636366'/></svg>" />
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -460,20 +460,8 @@
     .cookie-btn:hover{background:#f0f0f0}
     .cookie-btn.accept{background:#000;color:#fff;border-color:#000}
     .cookie-btn.accept:hover{background:#333}
-    /* Share view mode */
-    .share-view .lp{display:none}
-    .share-view .top{display:none}
-    .share-view .cv{cursor:grab}
-    .share-view .rh{display:none!important}
-    .share-view-badge{position:fixed;bottom:20px;right:20px;font-size:11px;color:#888;background:#fff;border:1px solid #e5e5ea;padding:8px 14px;z-index:999;pointer-events:none;letter-spacing:.02em}
-    /* Share link button */
+
     .exp-divider{height:1px;background:#e5e5ea;margin:14px 0}
-    .exp-share-btn{width:100%;padding:10px;border:1px solid #1C1C1E;background:#fff;color:#1C1C1E;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:0;transition:background .1s}
-    .exp-share-btn:hover{background:#f5f5f5}
-    /* Toast */
-    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:#1C1C1E;color:#fff;font-size:12px;padding:8px 18px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;letter-spacing:.02em}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    /* Share panel */
 
     /* ─── Mobile stub ─── */
     .mob-stub{display:none;position:fixed;inset:0;background:#fff;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center}
@@ -744,10 +732,7 @@
       <div class="guide-a">мобильная версия пока недоступна. используй ка-би-нéт на компьютере — в любом браузере.</div>
     </div>
 
-    <div class="guide-qa">
-      <div class="guide-q">как поделиться доской с другим человеком?</div>
-      <div class="guide-a">нажми «поделиться» в левой панели — скопируй ссылку и отправь. человек откроет доску в режиме просмотра, редактировать не сможет. если хочешь чтобы кто-то внёс правки — он может зарегистрироваться, ты даёшь ему доступ к своему аккаунту и он редактирует с него.</div>
-    </div>
+
 
     <div class="guide-qa">
       <div class="guide-q">как удалить элемент на доске?</div>
@@ -831,15 +816,7 @@
   <div id="docBody" style="padding:20px 24px;overflow-y:auto;max-height:calc(80vh - 48px);font-size:13px;line-height:1.7;color:#1C1C1E"></div>
 </div>
 
-<!-- Share panel -->
-<div class="panel" id="panelExport">
-  <div class="panel-head"><span>поделиться</span><button class="panel-close">✕</button></div>
-  <div class="panel-body">
-    <p style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.5">ссылка откроет доску в режиме просмотра — без редактирования</p>
-    <button class="exp-share-btn" id="shareBtn">скопировать ссылку</button>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
+
 <div class="cookie hidden" id="cookieBanner">
   <span class="cookie-text">мы используем куки для работы приложения и аналитики. продолжая использование, вы соглашаетесь с <span id="cookiePrivacyLink" style="color:#000;text-decoration:underline;text-underline-offset:2px;cursor:pointer">политикой конфиденциальности</span></span>
   <div class="cookie-btns">
@@ -932,20 +909,7 @@ function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 
 // ─── Storage ───
-let shareMode=false
 function load(){
-  // check for shared board in URL hash
-  const hash=location.hash.slice(1)
-  if(hash&&hash.startsWith('s=')){
-    try{
-      const json=LZString.decompressFromEncodedURIComponent(hash.slice(2))
-      const board=JSON.parse(json)
-      const bid=gid()
-      D={pname:board.name||'доска',boards:[{...board,id:bid,fid:null}],notes:[],folders:[],active:{type:'board',id:bid}}
-      shareMode=true
-      return
-    }catch(e){console.warn('share decode failed',e)}
-  }
   try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);if(d.boards){D=d;return}}}catch(e){}
   const bid=gid()
   D={pname:sessionStorage.getItem('kabinet-username')||'мой проект',boards:[{id:bid,name:'новая доска',fid:null,nodes:[],conns:[],vp:{x:0,y:0,z:1},nid:1}],notes:[],folders:[],active:{type:'board',id:bid}}
@@ -1105,7 +1069,7 @@ function renderLP(){
 
   // Instruction, Account & Info
   h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-save" id="lpSave">сохранить</div></div>`
-  h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="export">поделиться</div></div>`
+
   h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="guide">инструкция</div></div>`
   h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="account">мой аккаунт</div></div>`
   h+=`<div class="sec" style="border-top:1px solid #000"><div class="slbl lp-link" data-link="info">информация</div></div>`
@@ -1194,14 +1158,14 @@ function bindLP(){
     if(link==='guide')showPanel('guide')
     if(link==='account')showPanel('account')
     if(link==='info')showPanel('info')
-    if(link==='export')showPanel('export')
+
   }))
 }
 
 // ─── Panels ───
 const panelOverlay=$('panelOverlay')
 function showPanel(name){
-  const map={account:'panelAccount',info:'panelInfo',guide:'panelGuide',export:'panelExport'}
+  const map={account:'panelAccount',info:'panelInfo',guide:'panelGuide'}
   const id=map[name];if(!id)return
   if(name==='account'){
     const uname=sessionStorage.getItem('kabinet-username')||sessionStorage.getItem('kabinet-session')||''
@@ -1372,32 +1336,7 @@ function openDoc(key){
   panelOverlay.classList.add('open')
 }
 // ─── Export ───
-// ─── Share link ───
-function showToast(msg){
-  const t=document.getElementById('toast');if(!t)return
-  t.textContent=msg;t.classList.add('show')
-  setTimeout(()=>t.classList.remove('show'),2200)
-}
-document.getElementById('shareBtn')?.addEventListener('click',()=>{
-  const b=AB();if(!b){showToast('нет активной доски');return}
-  try{
-    const boardData=JSON.stringify(b)
-    const compressed=LZString.compressToEncodedURIComponent(boardData)
-    const url=location.href.split('#')[0]+'#s='+compressed
-    navigator.clipboard.writeText(url).then(()=>{
-      showToast('ссылка скопирована')
-      closePanel()
-    }).catch(()=>{
-      // fallback
-      const inp=document.createElement('input')
-      inp.value=url;document.body.appendChild(inp)
-      inp.select();document.execCommand('copy')
-      inp.remove()
-      showToast('ссылка скопирована')
-      closePanel()
-    })
-  }catch(e){showToast('ошибка — доска слишком большая')}
-})
+
 
 // ─── Cookie consent ───
 ;(()=>{
@@ -1707,7 +1646,6 @@ cv.addEventListener('mousedown',e=>{
 
 function ndDown(e,id){
   e.stopPropagation()
-  if(shareMode)return
   if(tool==='connect'){if(!cf){cf=id}else{addConn(cf,id);cf=null};rc();return}
   if(cf){addConn(cf,id);cf=null;rc();return}
   // finish edit if clicking different node
@@ -1931,7 +1869,6 @@ function mkNd(nd){
   el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
   el.querySelectorAll('.rh').forEach(rh=>{
     rh.addEventListener('mousedown',e=>{
-      if(shareMode)return
       e.stopPropagation();e.preventDefault()
       const n=AB()?.nodes.find(n=>n.id===nd.id);if(!n)return
       const dir=rh.className.replace('rh rh-','')
@@ -2647,17 +2584,4 @@ function renderSVG(b,z,vx,vy){
 
 
 load();R()
-// apply share mode after render
-if(shareMode){
-  document.getElementById('app').classList.add('share-view')
-  // hide splash in share mode
-  const sp=document.getElementById('splash');if(sp)sp.remove()
-  // show read-only badge
-  const badge=document.createElement('div')
-  badge.className='share-view-badge'
-  badge.textContent='режим просмотра'
-  document.body.appendChild(badge)
-  // disable all editing interactions
-  cv.addEventListener('dblclick',e=>e.stopPropagation(),true)
-}
 </script>
