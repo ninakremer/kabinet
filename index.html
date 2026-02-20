@@ -15,7 +15,7 @@
     /* Splash / Auth */
     .splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:transparent;pointer-events:all}
     .splash-card{position:relative;z-index:1;width:320px;background:#fff;border:1px solid #000;padding:32px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:0}
-    .splash-logo-wrap{width:100%;margin-bottom:6px}
+    .splash-logo-wrap{width:100%;margin-bottom:6px;margin-top:-3px}
     .splash-tagline{font-size:11px;color:#888;margin-bottom:28px;text-align:center;letter-spacing:.01em}
     .splash-tabs{display:flex;width:100%;margin-bottom:22px}
     .splash-tab{flex:1;padding:7px 0;font-size:11px;font-weight:600;font-family:inherit;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#888;transition:color .1s,border-color .1s;letter-spacing:.02em}
@@ -168,7 +168,8 @@
     /* Canvas */
     .cv{flex:1;position:relative;overflow:hidden;background:#F2F2F7;cursor:grab;display:none}
     .cv.show{display:block}
-    .cv.panning{cursor:grabbing}.cv.dragging-node{cursor:grabbing}.cv.tool-active{cursor:crosshair}
+    .cv.panning{cursor:grabbing}
+    .cv.drawing{cursor:crosshair!important}.cv.dragging-node{cursor:grabbing}.cv.tool-active{cursor:crosshair}
     .grd{position:absolute;inset:0;background-image:radial-gradient(circle,#D1D1D6 .7px,transparent .7px);opacity:.4;pointer-events:none}
     .cv svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 
@@ -247,6 +248,11 @@
     .nd{position:absolute;background:#FFF;border-radius:12px;border:1px solid #1C1C1E;box-shadow:none;z-index:2;overflow:visible;transition:border-color .12s;will-change:left,top}
     .nd.dragging{transition:none!important;z-index:20}
     .nd.sel{border-color:#000;border-width:1.5px;box-shadow:none;z-index:10}
+    .nd-palette{position:absolute;bottom:calc(100% + 6px);left:0;display:none;gap:4px;background:#fff;border:1px solid #000;padding:4px;z-index:100;flex-wrap:wrap;width:160px}
+    .nd.sel .nd-palette{display:flex}
+    .nd-pal-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
+    .nd-pal-dot:hover{transform:scale(1.2)}
+    .nd-pal-dot.active{border:2px solid #000}
     .nd.conn-src{border-color:#007AFF;border-width:1.5px}
     .nd-inner{width:100%;min-height:inherit}
     .nd-text{font-size:11px;font-weight:400;color:#1C1C1E;letter-spacing:-.01em;word-break:break-word;white-space:pre-wrap;width:100%;line-height:1.45}
@@ -254,7 +260,7 @@
     .nd-text.ph{opacity:.35}
     .nd textarea{width:100%;min-height:60px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;resize:none;padding:0;margin:0;line-height:1.45}
     .nd-edit{width:100%;min-height:40px;border:none;outline:none;background:transparent;color:#1C1C1E;font-size:11px;font-weight:400;letter-spacing:-.01em;font-family:inherit;line-height:1.45;word-break:break-word}
-    .nd-edit:empty::before{content:'двойной клик…';color:#AEAEB2;pointer-events:none}
+    .nd-edit:empty::before{content:'';color:#AEAEB2;pointer-events:none}
     .nd-limit-warn{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:9px;padding:3px 8px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
     .nd-limit-warn.visible{opacity:1}
     .nd-edit{min-height:32px;outline:none}
@@ -331,15 +337,27 @@
 
     /* Shapes */
     .shp{width:100%;height:100%;display:flex;align-items:center;justify-content:center;min-height:inherit}
+    .shp-pick{width:100%;height:100%;display:flex;flex-direction:column;min-height:140px}
+    .shp-grid2{display:flex;gap:1px;background:#000;flex:1}
+    .shp-cell{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;flex:1}
+    .shp-cell:hover{background:#f0f0f0}
+    .shp-sq{width:38px;height:38px;background:#000}
+    .shp-ci{width:38px;height:38px;background:#000;border-radius:50%}
+    .shp-svg-icon{width:42px;height:42px;display:block}
+    .shp-lbl{font-size:9px;color:#888}
+    .shp-svg-full{width:100%;height:100%;display:block}
+    .shp-hint{font-size:9px;color:#bbb;text-align:center;padding:5px 0;flex-shrink:0}
+    .shp-divider{height:1px;background:#000;flex-shrink:0}
+    .shp-icon{font-size:28px;color:#000;line-height:1}
+    .shp-icon-wrap{width:100%;height:100%;display:flex;flex-direction:column}
+    .shp-icon-full{flex:1;display:flex;align-items:center;justify-content:center;font-size:60px;color:#000;line-height:1}
+    .shp-icon-text{width:100%;min-height:20px;padding:4px 8px;outline:none;font-family:inherit;color:#1C1C1E;text-align:center;box-sizing:border-box}
+    .shp-icon-text:empty::before{content:"текст...";color:#ccc;pointer-events:none}
     .shp-body{width:100%;min-height:inherit;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .shp-body.circle{border-radius:50%}
     .shp-body.square{border-radius:0}
-    .shp-text{color:#FFF;font-size:13px;font-weight:500;text-align:center;outline:none;width:80%;word-break:break-word;font-family:inherit;padding:8px;line-height:1.4;min-height:1em;cursor:text}
+    .shp-text{color:#fff;font-size:11px;font-weight:500;text-align:center;outline:none;width:80%;word-break:break-word;font-family:inherit;padding:8px;line-height:1.4;min-height:1em;cursor:text}
     .shp-text:empty::before{content:'текст...';color:rgba(255,255,255,0.3);pointer-events:none}
-    .shp-pick{display:flex;gap:12px;align-items:center;justify-content:center;width:100%;height:100%;min-height:inherit}
-    .shp-opt{width:40px;height:40px;background:#000;cursor:pointer;transition:transform .15s;display:flex;align-items:center;justify-content:center}
-    .shp-opt:hover{transform:scale(1.2)}
-    .shp-opt.circle{border-radius:50%}
 
     /* Lamp */
     .lamp{width:100%;height:100%;display:flex;align-items:center;justify-content:center;min-height:inherit;position:relative;overflow:hidden;pointer-events:none;border-radius:50%}
@@ -364,9 +382,6 @@
     .photos-item:hover .photos-del{display:flex}
     .photos-add-btn{width:100%;padding:8px 0;text-align:center;font-size:10px;color:#aaa;cursor:pointer;border:1px dashed #ddd;margin-top:4px;box-sizing:border-box}
     .photos-add-btn:hover{color:#000;border-color:#000}
-    .nd-drag-handle{height:12px;width:100%;cursor:grab;position:relative;z-index:2;flex-shrink:0;background:transparent}
-    .nd-drag-handle:active{cursor:grabbing}
-    .nd:hover .nd-drag-handle{background:rgba(0,0,0,.04)}
     .img-placeholder{width:100%;min-height:80px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;cursor:pointer;border-radius:11px}
     /* Grid tool */
     .grd-pick{width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;gap:10px}
@@ -414,7 +429,6 @@
     .cmt{width:100%;display:flex;flex-direction:column;gap:0}
     .cmt-head{display:flex;align-items:center;justify-content:space-between;gap:4px;cursor:pointer;padding:4px 0 3px}
     .cmt-from-wrap{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
-    .cmt-avatar{width:18px;height:18px;border-radius:50%;background:#1C1C1E;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase}
     .cmt-from{font-size:9px;font-weight:600;color:#1C1C1E;border:none;outline:none;background:none;font-family:inherit;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text}
     .cmt-from::placeholder{color:#AEAEB2;font-weight:400}
     .cmt-toggle{font-size:9px;color:#888;flex-shrink:0;transition:transform .15s;line-height:1}
@@ -475,7 +489,7 @@
         <text x="300" y="110" text-anchor="middle" font-family="-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif" font-size="124" font-weight="700" fill="#000000" letter-spacing="2">ка-би-нéт</text>
       </svg>
     </div>
-    <div class="splash-tagline">визуальный планер / майнд-карта / доска<br>для ваших идей и проектов</div>
+    <div class="splash-tagline">[ визуальный планер / майнд-карта /<br>интерактивная доска для идей ]</div>
     <div class="splash-tabs">
       <button class="splash-tab active" id="tabLogin">войти</button>
       <button class="splash-tab" id="tabReg">зарегистрироваться</button>
@@ -508,7 +522,7 @@
     <div class="cv" id="cv">
       <div class="grd" id="grd"></div>
       <svg id="sl"></svg>
-      <div class="empty" id="emp"><p>двойной клик — новая нода</p><p>drag — навигация · scroll — зум</p></div>
+      <div class="empty" id="emp"></div>
     </div>
     <div class="note-editor" id="ne">
       <div class="note-body" id="nb" contenteditable="true" data-placeholder="начни писать…"></div>
@@ -601,7 +615,7 @@
 
     <div class="guide-step">
       <span class="guide-icon">✦</span>
-      <div><b>нода</b>
+      <div><b>фрейм</b>
         <p>основной блок. двойной клик — редактировать. пиши текст, вставляй картинки прямо внутрь (перетащи файл или нажми «+ фото»).</p>
       </div>
     </div>
@@ -767,7 +781,7 @@
 
     <div class="guide-qa">
       <div class="guide-q">нашла баг или есть вопрос — куда писать?</div>
-      <div class="guide-a">пиши на <b>hello@ninarkremer.com</b> — каждое сообщение читается лично.</div>
+      <div class="guide-a">пиши на <b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e9818c858586a9878087889b829b8c848c9bc78a8684">[email&#160;protected]</a></b> — каждое сообщение читается лично.</div>
     </div>
 
   </div>
@@ -835,7 +849,7 @@
 </div>
 
 <input type="file" id="fup" accept="image/*" style="display:none">
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ─── Splash ───
 // ─── Auth splash ───
 ;(()=>{
@@ -906,7 +920,7 @@
 
 const SK='karta-v4',ZS=[.25,.5,.75,1,1.25,1.5,2,3]
 let D,sel=null,edt=null,cf=null,tool='hand'
-let drag=null,rsz=null,pan=null,mx=0,my=0,lct=0,lcx=0,lcy=0,imgCb=null
+let drag=null,rsz=null,pan=null,draw=null,mx=0,my=0,lct=0,lcx=0,lcy=0,imgCb=null
 let dragItem=null // for sidebar drag'n'drop
 let undoStack=[],redoStack=[],undoPause=false
 
@@ -1038,7 +1052,7 @@ function renderLP(){
   h+=`<div class="sec${collapsed.tools?' collapsed':''}" data-sec="tools"><div class="slbl" data-toggle="tools">инструменты</div><div class="sec-body"><div id="tools">`
   const tools=[
     {t:'hand',l:'рука'},
-    {t:'text',l:'нода'},
+    {t:'text',l:'фрейм'},
     {t:'checklist',l:'список'},
     {t:'calendar',l:'календарь'},
     {t:'calc',l:'калькулятор'},
@@ -1672,21 +1686,20 @@ cv.addEventListener('mousedown',e=>{
   if(e.target.closest('.nd')||e.target.closest('.na'))return
   if(tool!=='hand'&&tool!=='connect'){
     const p=s2b(e.clientX,e.clientY)
-    if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click()}
-    else if(tool==='photos'){addNode('photos',p.x-140,p.y-100)}
-    else addNode(tool,p.x-90,p.y-40)
-    setTool('hand')
-    // immediately start dragging the just-created node
-    if(tool!=='image'&&sel!==null){
-      const b=AB(),n=b?.nodes.find(n=>n.id===sel)
-      if(n){drag={id:sel,sx:e.clientX,sy:e.clientY,nx:n.x,ny:n.y};cv.classList.add('dragging-node')}
-    }
+    if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click();return}
+    if(tool==='photos'){addNode('photos',p.x-140,p.y-100);setTool('hand');return}
+    // all tools use draw mode (except image/photos)
+    if(tool==='image'){imgCb=(src)=>addNode('image',p.x-100,p.y-80,src);fup.click();return}
+    if(tool==='photos'){addNode('photos',p.x-140,p.y-100);setTool('hand');return}
+    draw={sx:e.clientX,sy:e.clientY,bx:p.x,by:p.y,type:tool}
+    cv.classList.add('drawing')
+    const prev=document.createElement('div');prev.id='drawPreview'
+    prev.style.cssText=`position:absolute;left:${e.clientX-cv.getBoundingClientRect().left}px;top:${e.clientY-cv.getBoundingClientRect().top}px;width:0;height:0;border:1.5px dashed #000;pointer-events:none;z-index:999;box-sizing:border-box`
+    cv.appendChild(prev)
     return
   }
   if(tool==='hand'){
-    const now=Date.now(),dx=e.clientX-lcx,dy=e.clientY-lcy
-    if(now-lct<400&&Math.sqrt(dx*dx+dy*dy)<10){lct=0;const p=s2b(e.clientX,e.clientY);addNode('text',p.x-90,p.y-40);return}
-    lct=now;lcx=e.clientX;lcy=e.clientY
+    lct=Date.now();lcx=e.clientX;lcy=e.clientY
   }
   const v=V();pan={sx:e.clientX,sy:e.clientY,vx:v.x,vy:v.y};cv.classList.add('panning')
   sel=null;cf=null;rc()
@@ -1699,7 +1712,12 @@ function ndDown(e,id){
   if(cf){addConn(cf,id);cf=null;rc();return}
   // finish edit if clicking different node
   if(edt!==null&&edt!==id){edt=null;rc()}
-  if(edt===id)return
+  if(edt===id){
+    // if clicking on the editable itself — stay in edit mode
+    if(e.target.closest('.nd-edit')||e.target.closest('.nd-img-add'))return
+    // otherwise exit edit and start drag
+    edt=null;rc()
+  }
   sel=id
   const n=AB()?.nodes.find(n=>n.id===id);if(!n)return
   drag={id,sx:e.clientX,sy:e.clientY,nx:n.x,ny:n.y}
@@ -1713,6 +1731,17 @@ function ndDown(e,id){
 
 window.addEventListener('mousemove',e=>{
   mx=e.clientX;my=e.clientY
+  if(draw){
+    const prev=document.getElementById('drawPreview');if(!prev)return
+    const r=cv.getBoundingClientRect()
+    const x=Math.min(e.clientX,draw.sx)-r.left
+    const y=Math.min(e.clientY,draw.sy)-r.top
+    const w=Math.abs(e.clientX-draw.sx)
+    const h=Math.abs(e.clientY-draw.sy)
+    prev.style.left=x+'px';prev.style.top=y+'px'
+    prev.style.width=w+'px';prev.style.height=h+'px'
+    return
+  }
   if(drag){
     const v=V(),z=v.z,b=AB(),n=b?.nodes.find(n=>n.id===drag.id);if(!n)return
     const ox=n.x,oy=n.y
@@ -1757,6 +1786,37 @@ window.addEventListener('mousemove',e=>{
   if(cf)rc()
 })
 window.addEventListener('mouseup',e=>{
+  if(draw){
+    const prev=document.getElementById('drawPreview');if(prev)prev.remove()
+    cv.classList.remove('drawing')
+    const v=V(),z=v.z
+    const r=cv.getBoundingClientRect()
+    const x1=Math.min(e.clientX,draw.sx),x2=Math.max(e.clientX,draw.sx)
+    const y1=Math.min(e.clientY,draw.sy),y2=Math.max(e.clientY,draw.sy)
+    const w=Math.max(80,(x2-x1)/z),h=Math.max(50,(y2-y1)/z)
+    const bx=(x1-r.left-v.x)/z,by=(y1-r.top-v.y)/z
+    // minimum size — just create default
+    if(w<20&&h<20){draw=null;return}
+    const b=AB();if(!b){draw=null;return}
+    const t=draw.type
+    draw=null
+    const id=b.nid++
+    let nd={id,type:t,x:bx,y:by,w,h,c:{}}
+    if(t==='text'){nd.c={text:'',html:''}}
+    else if(t==='checklist'){nd.c={items:[{text:'',done:false}]}}
+    else if(t==='calendar'){const now=new Date();nd.c={year:now.getFullYear(),month:now.getMonth(),marked:[]}}
+    else if(t==='calc'){nd.c={display:'0',expr:'',fresh:true}}
+    else if(t==='table'){nd.c={rows:[['','',''],['','',''],['','','']]}}
+    else if(t==='timer'){nd.c={mode:'timer',h:0,m:5,s:0,left:300,running:false,done:false,startedAt:null,magnetTo:null,deadline:null}}
+    else if(t==='shape'){nd.c={form:null,text:''}}
+    else if(t==='lamp'){nd.c={label:''}}
+    else if(t==='grid'){nd.c={format:null,src:''}}
+    else if(t==='comment'){nd.c={from:'',text:'',open:false,magnetTo:null}}
+    else if(t==='photos'){nd.c={imgs:[]}}
+    b.nodes.push(nd);sel=id;save();rc()
+    setTool('hand')
+    return
+  }
   if(drag){const b=AB(),v=V();if(b)renderSVG(b,v.z,v.x,v.y)}
   if(drag){save();drag=null;cv.classList.remove('dragging-node');cv.querySelectorAll('.nd.dragging').forEach(el=>el.classList.remove('dragging'))}
   if(rsz){save();rsz=null}
@@ -1804,7 +1864,7 @@ function renderFolderView(f){
 
   const fBoards=D.boards.filter(b=>b.fid===f.id)
   const fNotes=D.notes.filter(n=>n.fid===f.id)
-  const items=[...fBoards.map(b=>({type:'board',id:b.id,name:b.name,icon:'',meta:b.nodes.length+' нод'})),...fNotes.map(n=>({type:'note',id:n.id,name:n.name,icon:'',meta:'заметка'}))]
+  const items=[...fBoards.map(b=>({type:'board',id:b.id,name:b.name,icon:'',meta:b.nodes.length+' фреймов'})),...fNotes.map(n=>({type:'note',id:n.id,name:n.name,icon:'',meta:'заметка'}))]
 
   const zle=$('zl');if(zle)zle.textContent='100%'
   grd.style.backgroundSize='32px 32px';grd.style.backgroundPosition='0px 0px'
@@ -1840,7 +1900,7 @@ function renderFolderView(f){
 
 function mkNd(nd){
   const el=document.createElement('div');el.className='nd';el.dataset.id=nd.id
-  el.innerHTML=`<div class="nd-drag-handle"></div><div class="nd-inner"></div>
+  el.innerHTML=`<div class="nd-palette"><div class="nd-pal-dot" data-color="#ffffff" style="background:#ffffff"></div><div class="nd-pal-dot" data-color="#f5f5f5" style="background:#f5f5f5"></div><div class="nd-pal-dot" data-color="#000000" style="background:#000000"></div><div class="nd-pal-dot" data-color="#FFE4E1" style="background:#FFE4E1"></div><div class="nd-pal-dot" data-color="#FFF9C4" style="background:#FFF9C4"></div><div class="nd-pal-dot" data-color="#E8F5E9" style="background:#E8F5E9"></div><div class="nd-pal-dot" data-color="#E3F2FD" style="background:#E3F2FD"></div><div class="nd-pal-dot" data-color="#F3E5F5" style="background:#F3E5F5"></div><div class="nd-pal-dot" data-color="#FBE9E7" style="background:#FBE9E7"></div><div class="nd-pal-dot" data-color="#E0F7FA" style="background:#E0F7FA"></div></div><div class="nd-inner"></div>
     <div class="rh rh-se"></div>
     <div class="rh rh-s"></div>
     <div class="rh rh-e"></div>
@@ -1850,6 +1910,24 @@ function mkNd(nd){
     <div class="rh rh-ne"></div>
     <div class="rh rh-sw"></div>`
   el.addEventListener('mousedown',e=>{if(!e.target.closest('.rh'))ndDown(e,nd.id)},true)
+  el.querySelectorAll('.nd-pal-dot').forEach(dot=>{
+    dot.addEventListener('mousedown',e=>e.stopPropagation())
+    dot.addEventListener('click',e=>{
+      e.stopPropagation()
+      nd.c.bg=dot.dataset.color
+      el.querySelectorAll('.nd-pal-dot').forEach(d=>d.classList.toggle('active',d.dataset.color===dot.dataset.color))
+      if(nd.type==='shape'){
+        // apply to shape body or icon
+        const body=el.querySelector('.shp-body')
+        const icon=el.querySelector('.shp-icon-full')
+        if(body)body.style.background=dot.dataset.color
+        if(icon)icon.style.color=dot.dataset.color
+      } else {
+        el.style.background=dot.dataset.color
+      }
+      save()
+    })
+  })
   el.addEventListener('dblclick',e=>{e.stopPropagation();if(nd.type==='text')startEdit(nd.id)})
   el.querySelectorAll('.rh').forEach(rh=>{
     rh.addEventListener('mousedown',e=>{
@@ -1870,7 +1948,10 @@ function upNd(el,nd,z,vx,vy){
   else{el.style.height='auto';el.style.minHeight=((nd.h||80)*z)+'px'}
   el.classList.toggle('sel',sel===nd.id);el.classList.toggle('conn-src',cf===nd.id)
   if((nd.type==='shape'&&nd.c.form)||nd.type==='lamp'){el.style.background='none';el.style.border='none';el.style.boxShadow='none'}
-  else{el.style.background='';el.style.border='';el.style.boxShadow=''}
+  else{
+    if(nd.type==='shape'){el.style.background='none';el.style.border='';el.style.boxShadow=''}
+    else{el.style.background=nd.c.bg||'';el.style.border='';el.style.boxShadow=''}
+  }
   if(nd.type==='lamp'){el.style.borderRadius='50%';el.style.overflow='visible'}
   else{el.style.borderRadius='';el.style.overflow='visible'}
   const inner=el.querySelector('.nd-inner')
@@ -1912,7 +1993,7 @@ function addImgToNode(ed,src,nd){
 function rText(inner,nd,z){
   if(edt===nd.id){
     if(!inner.querySelector('.nd-edit')){
-      inner.innerHTML=`<div class="nd-edit" contenteditable="true" style="font-size:${11*z}px">${nd.c.html||esc(nd.c.text||'')}</div><div class="nd-img-add">+ фото</div>`
+      inner.innerHTML=`<div class="nd-edit" contenteditable="true" style="font-size:11px">${nd.c.html||esc(nd.c.text||'')}</div><div class="nd-img-add">+ фото</div>`
       const ed=inner.querySelector('.nd-edit')
       ed.addEventListener('mousedown',e=>e.stopPropagation())
       const LIMIT=2500
@@ -1963,15 +2044,15 @@ function rText(inner,nd,z){
   else{
     const hasContent=nd.c.html||nd.c.text
     if(inner.querySelector('.nd-edit')||inner.querySelector('.nd-img-add')||!inner.querySelector('.nd-text')){
-      if(nd.c.html)inner.innerHTML=`<div class="nd-text" style="font-size:${11*z}px">${nd.c.html}</div>`
-      else inner.innerHTML=`<div class="nd-text${hasContent?'':' ph'}" style="font-size:${11*z}px">${esc(nd.c.text)||'двойной клик…'}</div>`
+      if(nd.c.html)inner.innerHTML=`<div class="nd-text" style="font-size:11px">${nd.c.html}</div>`
+      else inner.innerHTML=`<div class="nd-text${hasContent?'':' ph'}" style="font-size:11px">${esc(nd.c.text)||'двойной клик…'}</div>`
     }else{
       if(!nd.c.html){const sp=inner.querySelector('.nd-text');sp.textContent=nd.c.text||'двойной клик…';sp.className='nd-text'+(hasContent?'':' ph');sp.style.fontSize=14*z+'px'}
     }
   }
 }
 function rCheck(inner,nd,z){
-  const items=nd.c.items||[];let h='';items.forEach((it,i)=>{h+=`<div class="cl-item"><input type="checkbox" class="cl-cb" data-i="${i}" ${it.done?'checked':''}><input class="cl-txt${it.done?' done':''}" value="${esc(it.text)}" data-i="${i}" placeholder="задача…" style="font-size:${13*z}px"></div>`});h+=`<button class="cl-add" style="font-size:${11*z}px">+ добавить</button>`
+  const items=nd.c.items||[];let h='';items.forEach((it,i)=>{h+=`<div class="cl-item"><input type="checkbox" class="cl-cb" data-i="${i}" ${it.done?'checked':''}><input class="cl-txt${it.done?' done':''}" value="${esc(it.text)}" data-i="${i}" placeholder="задача…" style="font-size:11px"></div>`});h+=`<button class="cl-add" style="font-size:11px">+ добавить</button>`
   if(inner.querySelectorAll('.cl-item').length!==items.length||!inner.querySelector('.cl-add')){inner.innerHTML=h
     inner.querySelectorAll('.cl-cb').forEach(cb=>{cb.addEventListener('mousedown',e=>e.stopPropagation());cb.addEventListener('change',e=>{nd.c.items[+e.target.dataset.i].done=e.target.checked;save();rc()})})
     inner.querySelectorAll('.cl-txt').forEach(inp=>{inp.addEventListener('mousedown',e=>e.stopPropagation());inp.addEventListener('input',e=>{nd.c.items[+e.target.dataset.i].text=e.target.value;save()});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nd.c.items.push({text:'',done:false});save();rc();setTimeout(()=>{inner.querySelectorAll('.cl-txt')[inner.querySelectorAll('.cl-txt').length-1]?.focus()},30)};if(e.key==='Backspace'&&!e.target.value&&nd.c.items.length>1){nd.c.items.splice(+e.target.dataset.i,1);save();rc()}})})
@@ -2010,14 +2091,28 @@ function rPhotos(inner,nd,z){
   addBtn.addEventListener('mousedown',e=>e.stopPropagation())
   addBtn.addEventListener('click',e=>{
     e.stopPropagation()
-    fup.multiple=true
-    imgCb=(src)=>{
-      nd.c.imgs.push(src)
-      save()
-      inner.dataset.photosReady='0'
-      rPhotos(inner,nd,z)
-    }
-    fup.click()
+    const inp=document.createElement('input')
+    inp.type='file';inp.accept='image/*';inp.multiple=true
+    inp.addEventListener('change',()=>{
+      const files=[...inp.files]
+      if(!files.length)return
+      let loaded=0
+      files.forEach(f=>{
+        const r=new FileReader()
+        r.onload=ev=>{
+          nd.c.imgs.push(ev.target.result)
+          loaded++
+          if(loaded===files.length){
+            save()
+            inner.dataset.photosReady='0'
+            inner.innerHTML=''
+            rPhotos(inner,nd,z)
+          }
+        }
+        r.readAsDataURL(f)
+      })
+    })
+    inp.click()
   })
   inner.appendChild(addBtn)
   // render imgs into shortest column
@@ -2089,7 +2184,7 @@ function rGrid(inner,nd,z){
       fup.click()
     })
   }else{
-    inner.innerHTML=`<div class="grd-frame grd-empty"><span class="grd-badge" style="font-size:${8*z}px">${badge}</span><div class="grd-plus" style="font-size:${10*z}px">+ загрузить фото</div></div>`
+    inner.innerHTML=`<div class="grd-frame grd-empty"><span class="grd-badge" style="font-size:11px">${badge}</span><div class="grd-plus" style="font-size:11px">+ загрузить фото</div></div>`
     inner.querySelector('.grd-empty').addEventListener('mousedown',e=>e.stopPropagation())
     inner.querySelector('.grd-empty').addEventListener('click',e=>{
       e.stopPropagation()
@@ -2102,24 +2197,21 @@ function rGrid(inner,nd,z){
 function rComment(inner,nd,z){
   const c=nd.c
   // avatar initial
-  const initials=c.from?c.from.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase():'?'
-
   // build HTML
   let h=`<div class="cmt">`
   h+=`<div class="cmt-head" data-ca="toggle">
     <div class="cmt-from-wrap">
-      <div class="cmt-avatar" style="font-size:${7*z}px;width:${18*z}px;height:${18*z}px">${esc(initials)}</div>
-      <input class="cmt-from" placeholder="имя…" value="${esc(c.from)}" style="font-size:${9*z}px" data-ca="from">
+      <input class="cmt-from" placeholder="имя…" value="${esc(c.from)}" style="font-size:11px" data-ca="from">
     </div>
     <span class="cmt-toggle${c.open?' open':''}">▾</span>
   </div>`
   h+=`<div class="cmt-body${c.open?' open':''}">`
   h+=`<div class="cmt-divider"></div>`
-  h+=`<textarea class="cmt-text" placeholder="комментарий…" style="font-size:${10*z}px">${esc(c.text)}</textarea>`
+  h+=`<textarea class="cmt-text" placeholder="комментарий…" style="font-size:11px">${esc(c.text)}</textarea>`
   h+=`<div class="cmt-footer">`
   const b2=AB()
   const linked=c.magnetTo?b2?.nodes.find(n=>n.id===c.magnetTo):null
-  h+=`<div class="cmt-magnet${c.magnetTo?' linked':''}" data-ca="magnet" style="font-size:${8*z}px">${c.magnetTo?(linked?'⊙ '+esc(linked.type):'⊙ ?'):'◯ прикрепить'}</div>`
+  h+=`<div class="cmt-magnet${c.magnetTo?' linked':''}" data-ca="magnet" style="font-size:11px">${c.magnetTo?(linked?'⊙ '+esc(linked.type):'⊙ ?'):'◯ прикрепить'}</div>`
   h+=`</div></div></div>`
   inner.innerHTML=h
 
@@ -2140,7 +2232,7 @@ function rComment(inner,nd,z){
   const fromInp=inner.querySelector('.cmt-from')
   fromInp.addEventListener('mousedown',e=>e.stopPropagation())
   fromInp.addEventListener('input',()=>{c.from=fromInp.value;save()})
-  fromInp.addEventListener('blur',()=>{rc()}) // refresh avatar
+  fromInp.addEventListener('blur',()=>{save()})
 
   // textarea
   const ta=inner.querySelector('.cmt-text')
@@ -2184,13 +2276,13 @@ function rCalc(inner,nd,z){
   if(inner.querySelector('.calc'))return
   const c=nd.c
   const btns=['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','⌫','=']
-  let h=`<div class="calc"><div class="calc-display" style="font-size:${18*z}px">${esc(c.display)}</div><div class="calc-grid">`
+  let h=`<div class="calc"><div class="calc-display" style="font-size:11px">${esc(c.display)}</div><div class="calc-grid">`
   btns.forEach(b=>{
     let cls='calc-btn'
     if('÷×−+'.includes(b))cls+=' op'
     if(b==='=')cls+=' eq'
     if(b==='C'||b==='±'||b==='%'||b==='⌫')cls+=' clr'
-    h+=`<button class="${cls}" data-cb="${b}" style="font-size:${11*z}px">${b}</button>`
+    h+=`<button class="${cls}" data-cb="${b}" style="font-size:11px">${b}</button>`
   })
   h+='</div></div>'
   inner.innerHTML=h
@@ -2246,15 +2338,15 @@ function rTable(inner,nd,z){
   rows.forEach((row,ri)=>{
     h+='<tr>'
     row.forEach((cell,ci)=>{
-      h+=`<td contenteditable="true" data-r="${ri}" data-c="${ci}" style="font-size:${11*z}px">${esc(cell)}</td>`
+      h+=`<td contenteditable="true" data-r="${ri}" data-c="${ci}" style="font-size:11px">${esc(cell)}</td>`
     })
     h+='</tr>'
   })
   h+='</table><div class="tbl-actions">'
-  h+=`<button class="tbl-ab" data-ta="row" style="font-size:${9*z}px">+ строка</button>`
-  h+=`<button class="tbl-ab" data-ta="col" style="font-size:${9*z}px">+ колонка</button>`
-  h+=`<button class="tbl-ab" data-ta="delrow" style="font-size:${9*z}px">− строка</button>`
-  h+=`<button class="tbl-ab" data-ta="delcol" style="font-size:${9*z}px">− колонка</button>`
+  h+=`<button class="tbl-ab" data-ta="row" style="font-size:11px">+ строка</button>`
+  h+=`<button class="tbl-ab" data-ta="col" style="font-size:11px">+ колонка</button>`
+  h+=`<button class="tbl-ab" data-ta="delrow" style="font-size:11px">− строка</button>`
+  h+=`<button class="tbl-ab" data-ta="delcol" style="font-size:11px">− колонка</button>`
   h+='</div></div>'
   inner.innerHTML=h
   inner.querySelectorAll('td').forEach(td=>{
@@ -2311,7 +2403,7 @@ function rLamp(inner,nd,z){
     <div class="lamp-ring lamp-ring-1"></div>
     <div class="lamp-aura lamp-aura-1"></div>
     <div class="lamp-core"></div>
-    <div class="lamp-label" contenteditable="true" style="font-size:${9*z}px">${c.label||''}</div>
+    <div class="lamp-label" contenteditable="true" style="font-size:11px">${c.label||''}</div>
   </div>`
   const lbl=inner.querySelector('.lamp-label')
   lbl.addEventListener('mousedown',e=>e.stopPropagation())
@@ -2323,22 +2415,36 @@ function rLamp(inner,nd,z){
 function rShape(inner,nd,z){
   const c=nd.c
   if(!c.form){
-    // shape picker
     if(inner.querySelector('.shp-pick'))return
-    inner.innerHTML=`<div class="shp-pick"><div class="shp-opt square" data-f="square"></div><div class="shp-opt circle" data-f="circle"></div></div>`
-    inner.querySelectorAll('.shp-opt').forEach(o=>{
+    inner.innerHTML=`<div class="shp-pick">
+      <div class="shp-grid2">
+        <div class="shp-cell" data-f="square"><div class="shp-sq"></div><span class="shp-lbl">квадрат</span></div>
+        <div class="shp-cell" data-f="circle"><div class="shp-ci"></div><span class="shp-lbl">круг</span></div>
+      </div>
+      <div class="shp-divider"></div>
+      <div class="shp-grid2">
+        <div class="shp-cell" data-f="star"><span class="shp-icon">★</span><span class="shp-lbl">звезда</span></div>
+        <div class="shp-cell" data-f="heart"><span class="shp-icon">♥</span><span class="shp-lbl">сердце</span></div>
+      </div>
+      <div class="shp-hint">выбери фигуру</div>
+    </div>`
+    inner.querySelectorAll('.shp-cell').forEach(o=>{
       o.addEventListener('mousedown',e=>e.stopPropagation())
       o.addEventListener('click',e=>{e.stopPropagation();c.form=o.dataset.f;save();inner.innerHTML='';rShape(inner,nd,z)})
     })
     return
   }
-  const existing=inner.querySelector('.shp-body')
-  if(existing){
-    const txt=existing.querySelector('.shp-text')
-    if(txt)txt.style.fontSize=13*z+'px'
+  if(inner.querySelector('.shp-body,.shp-icon-full'))return
+  if(c.form==='heart'||c.form==='star'){
+    const icon=c.form==='heart'?'♥':'★'
+    inner.innerHTML=`<div class="shp-icon-wrap"><div class="shp-icon-full" style="color:${nd.c.bg||'#000'}">${icon}</div><div class="shp-icon-text" contenteditable="true" style="font-size:11px">${c.text||''}</div></div>`
+    const txt=inner.querySelector('.shp-icon-text')
+    txt.addEventListener('mousedown',e=>e.stopPropagation())
+    txt.addEventListener('input',()=>{c.text=txt.innerHTML;save()})
+    txt.addEventListener('keydown',e=>e.stopPropagation())
     return
   }
-  inner.innerHTML=`<div class="shp"><div class="shp-body ${c.form}"><div class="shp-text" contenteditable="true" style="font-size:${13*z}px">${c.text||''}</div></div></div>`
+  inner.innerHTML=`<div class="shp"><div class="shp-body ${c.form}"><div class="shp-text" contenteditable="true" style="font-size:11px">${c.text||''}</div></div></div>`
   const txt=inner.querySelector('.shp-text')
   txt.addEventListener('mousedown',e=>e.stopPropagation())
   txt.addEventListener('input',()=>{c.text=txt.innerHTML;save()})
@@ -2364,7 +2470,7 @@ function rTimer(inner,nd,z){
   if(!c.mode)c.mode='timer'
   let h=`<div class="tmr">`
   // mode toggle
-  h+=`<div class="tmr-mode"><button class="tmr-mode-btn${c.mode==='timer'?' active':''}" data-mode="timer" style="font-size:${8*z}px">таймер</button><button class="tmr-mode-btn${c.mode==='date'?' active':''}" data-mode="date" style="font-size:${8*z}px">дата</button></div>`
+  h+=`<div class="tmr-mode"><button class="tmr-mode-btn${c.mode==='timer'?' active':''}" data-mode="timer" style="font-size:11px">таймер</button><button class="tmr-mode-btn${c.mode==='date'?' active':''}" data-mode="date" style="font-size:11px">дата</button></div>`
 
   if(c.mode==='timer'){
     // update left if running
@@ -2375,30 +2481,30 @@ function rTimer(inner,nd,z){
       if(c.left<=0){c.running=false;c.done=true;c.left=0}
     }
     const cls=c.done?'done':c.running?'running':''
-    h+=`<div class="tmr-display ${cls}" style="font-size:${22*z}px">${fmtTime(c.left)}</div>`
+    h+=`<div class="tmr-display ${cls}" style="font-size:11px">${fmtTime(c.left)}</div>`
     if(!c.running&&!c.done){
-      h+=`<div class="tmr-set"><input class="tmr-inp" data-u="h" value="${c.h}" style="font-size:${11*z}px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="m" value="${c.m}" style="font-size:${11*z}px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="s" value="${c.s}" style="font-size:${11*z}px"></div>`
+      h+=`<div class="tmr-set"><input class="tmr-inp" data-u="h" value="${c.h}" style="font-size:11px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="m" value="${c.m}" style="font-size:11px"><span class="tmr-sep">:</span><input class="tmr-inp" data-u="s" value="${c.s}" style="font-size:11px"></div>`
     }
     h+=`<div class="tmr-controls">`
-    if(!c.running&&!c.done)h+=`<button class="tmr-btn go" data-ta="start" style="font-size:${9*z}px">старт</button>`
-    if(c.running)h+=`<button class="tmr-btn" data-ta="stop" style="font-size:${9*z}px">стоп</button>`
-    if(c.done)h+=`<button class="tmr-btn go" data-ta="reset" style="font-size:${9*z}px">сброс</button>`
-    if(!c.running&&!c.done&&c.left>0)h+=`<button class="tmr-btn" data-ta="reset" style="font-size:${9*z}px">сброс</button>`
+    if(!c.running&&!c.done)h+=`<button class="tmr-btn go" data-ta="start" style="font-size:11px">старт</button>`
+    if(c.running)h+=`<button class="tmr-btn" data-ta="stop" style="font-size:11px">стоп</button>`
+    if(c.done)h+=`<button class="tmr-btn go" data-ta="reset" style="font-size:11px">сброс</button>`
+    if(!c.running&&!c.done&&c.left>0)h+=`<button class="tmr-btn" data-ta="reset" style="font-size:11px">сброс</button>`
     h+=`</div>`
   } else {
     // date mode
     const val=c.deadline||fmtDate(new Date())
-    h+=`<input type="date" class="tmr-date-inp" value="${val}" style="font-size:${11*z}px">`
+    h+=`<input type="date" class="tmr-date-inp" value="${val}" style="font-size:11px">`
     if(c.deadline){
       const overdue=new Date(c.deadline)<new Date()
-      h+=`<div class="tmr-countdown${overdue?' overdue':''}" style="font-size:${10*z}px">${deadlineText(c.deadline)}</div>`
+      h+=`<div class="tmr-countdown${overdue?' overdue':''}" style="font-size:11px">${deadlineText(c.deadline)}</div>`
     }
   }
 
   // magnet
   const b=AB()
   const linked=c.magnetTo?b?.nodes.find(n=>n.id===c.magnetTo):null
-  h+=`<div class="tmr-magnet ${c.magnetTo?'linked':''}" data-ta="magnet" style="font-size:${8*z}px">${c.magnetTo?(linked?'⊙ '+linked.type:'⊙ ?'):'◯ примагнитить'}</div>`
+  h+=`<div class="tmr-magnet ${c.magnetTo?'linked':''}" data-ta="magnet" style="font-size:11px">${c.magnetTo?(linked?'⊙ '+linked.type:'⊙ ?'):'◯ примагнитить'}</div>`
   h+=`</div>`
   inner.innerHTML=h
 
